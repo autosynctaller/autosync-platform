@@ -41,6 +41,7 @@ import {
   Gauge,
   Calendar,
   X,
+  Edit,
 } from 'lucide-react'
 
 interface ServicioOption {
@@ -111,9 +112,9 @@ export function AdminPanel({
   onOpenChange: (v: boolean) => void
 }) {
   const { toast } = useToast()
-  const [paso, setPaso] = useState<'login' | 'lista' | 'detalle' | 'cargar'>(
-    'login',
-  )
+  const [paso, setPaso] = useState<
+    'login' | 'lista' | 'detalle' | 'cargar' | 'editar-trabajo' | 'editar-vehiculo'
+  >('login')
   const [pin, setPin] = useState('')
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [loginLoading, setLoginLoading] = useState(false)
@@ -146,6 +147,23 @@ export function AdminPanel({
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [descripcionFoto, setDescripcionFoto] = useState('')
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null)
+
+  // edición
+  const [trabajoEditando, setTrabajoEditando] = useState<TrabajoDetalle | null>(null)
+  const [editVehiculo, setEditVehiculo] = useState({
+    marca: '',
+    modelo: '',
+    anio: '',
+    color: '',
+    kilometraje: '',
+    tipo: 'Auto',
+    combustible: 'Nafta',
+    notas: '',
+    cliente_nombre: '',
+    cliente_telefono: '',
+    cliente_email: '',
+    cliente_direccion: '',
+  })
 
   // Cerrar sesión
   const logout = () => {
@@ -368,6 +386,180 @@ export function AdminPanel({
     }
   }
 
+  // Iniciar edición de un trabajo
+  const iniciarEditarTrabajo = (t: TrabajoDetalle) => {
+    setTrabajoEditando(t)
+    setNuevoTrabajo({
+      servicioId: t.servicio?.id || '',
+      titulo: t.titulo,
+      descripcion: t.descripcion,
+      precio: String(t.precio),
+      estado: t.estado,
+      proximo: t.proximo || '',
+      fecha: t.fecha.split('T')[0],
+      kilometraje: t.kilometraje != null ? String(t.kilometraje) : '',
+    })
+    setPaso('editar-trabajo')
+  }
+
+  // Guardar cambios en trabajo editado
+  const guardarEdicionTrabajo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!trabajoEditando || !authToken || !vehiculoDetalle) return
+    if (!nuevoTrabajo.titulo || !nuevoTrabajo.descripcion || !nuevoTrabajo.precio) {
+      toast({
+        title: 'Faltan datos',
+        description: 'Título, descripción y precio son obligatorios.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setGuardando(true)
+    try {
+      const res = await fetch(`/api/trabajos/${trabajoEditando.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pin': authToken,
+        },
+        body: JSON.stringify({
+          titulo: nuevoTrabajo.titulo,
+          descripcion: nuevoTrabajo.descripcion,
+          precio: Number(nuevoTrabajo.precio),
+          estado: nuevoTrabajo.estado,
+          proximo: nuevoTrabajo.proximo || null,
+          fecha: nuevoTrabajo.fecha || null,
+          kilometraje: nuevoTrabajo.kilometraje
+            ? Number(nuevoTrabajo.kilometraje)
+            : null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      toast({
+        title: 'Trabajo actualizado',
+        description: 'Los cambios se guardaron correctamente.',
+      })
+      setTrabajoEditando(null)
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+      setPaso('detalle')
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al guardar',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  // Eliminar trabajo
+  const eliminarTrabajo = async (trabajoId: string) => {
+    if (!authToken || !vehiculoDetalle) return
+    if (!confirm('¿Seguro que querés eliminar este trabajo? Esta acción no se puede deshacer.')) return
+    try {
+      const res = await fetch(`/api/trabajos/${trabajoId}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-pin': authToken },
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error al eliminar')
+      }
+      toast({ title: 'Trabajo eliminado' })
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al eliminar',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // Iniciar edición de datos del vehículo
+  const iniciarEditarVehiculo = () => {
+    if (!vehiculoDetalle) return
+    setEditVehiculo({
+      marca: vehiculoDetalle.marca,
+      modelo: vehiculoDetalle.modelo,
+      anio: String(vehiculoDetalle.anio),
+      color: vehiculoDetalle.color || '',
+      kilometraje:
+        vehiculoDetalle.kilometraje != null
+          ? String(vehiculoDetalle.kilometraje)
+          : '',
+      tipo: vehiculoDetalle.tipo,
+      combustible: vehiculoDetalle.combustible || 'Nafta',
+      notas: vehiculoDetalle.notas || '',
+      cliente_nombre: vehiculoDetalle.cliente.nombre,
+      cliente_telefono: vehiculoDetalle.cliente.telefono,
+      cliente_email: vehiculoDetalle.cliente.email || '',
+      cliente_direccion: vehiculoDetalle.cliente.direccion || '',
+    })
+    setPaso('editar-vehiculo')
+  }
+
+  // Guardar cambios en el vehículo
+  const guardarEdicionVehiculo = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!authToken || !vehiculoDetalle) return
+    if (!editVehiculo.marca || !editVehiculo.modelo || !editVehiculo.anio) {
+      toast({
+        title: 'Faltan datos',
+        description: 'Marca, modelo y año son obligatorios.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setGuardando(true)
+    try {
+      const res = await fetch(`/api/vehiculos/${vehiculoDetalle.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pin': authToken,
+        },
+        body: JSON.stringify({
+          marca: editVehiculo.marca,
+          modelo: editVehiculo.modelo,
+          anio: Number(editVehiculo.anio),
+          color: editVehiculo.color || null,
+          kilometraje: editVehiculo.kilometraje
+            ? Number(editVehiculo.kilometraje)
+            : null,
+          tipo: editVehiculo.tipo,
+          combustible: editVehiculo.combustible || null,
+          notas: editVehiculo.notas || null,
+          cliente_nombre: editVehiculo.cliente_nombre,
+          cliente_telefono: editVehiculo.cliente_telefono,
+          cliente_email: editVehiculo.cliente_email,
+          cliente_direccion: editVehiculo.cliente_direccion,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      toast({
+        title: 'Vehículo actualizado',
+        description: 'Los cambios se guardaron correctamente.',
+      })
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+      setPaso('detalle')
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al guardar',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setGuardando(false)
+    }
+  }
+
   // Filtrado de búsqueda
   const vehiculosFiltrados = vehiculos.filter((v) => {
     const q = busqueda.toLowerCase().trim()
@@ -552,28 +744,38 @@ export function AdminPanel({
                           {vehiculoDetalle.cliente.telefono}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          // El precio lo carga el admin manualmente (control interno)
-                          const hoy = new Date().toISOString().split('T')[0]
-                          setNuevoTrabajo({
-                            servicioId: '',
-                            titulo: '',
-                            descripcion: '',
-                            precio: '',
-                            estado: 'Completado',
-                            proximo: '',
-                            fecha: hoy,
-                            kilometraje:
-                              vehiculoDetalle.kilometraje?.toString() || '',
-                          })
-                          setPaso('cargar')
-                        }}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Cargar trabajo
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={iniciarEditarVehiculo}
+                        >
+                          <Wrench className="mr-2 h-4 w-4" />
+                          Editar datos
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            // El precio lo carga el admin manualmente (control interno)
+                            const hoy = new Date().toISOString().split('T')[0]
+                            setNuevoTrabajo({
+                              servicioId: '',
+                              titulo: '',
+                              descripcion: '',
+                              precio: '',
+                              estado: 'Completado',
+                              proximo: '',
+                              fecha: hoy,
+                              kilometraje:
+                                vehiculoDetalle.kilometraje?.toString() || '',
+                            })
+                            setPaso('cargar')
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Cargar trabajo
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -751,6 +953,24 @@ export function AdminPanel({
                               <span className="text-sm font-bold">
                                 {formatPrecio(t.precio)}
                               </span>
+                              <div className="mt-1.5 flex justify-end gap-1">
+                                <button
+                                  onClick={() => iniciarEditarTrabajo(t)}
+                                  className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-primary"
+                                  aria-label="Editar trabajo"
+                                  title="Editar trabajo"
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => eliminarTrabajo(t.id)}
+                                  className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                  aria-label="Eliminar trabajo"
+                                  title="Eliminar trabajo"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </li>
@@ -947,6 +1167,387 @@ export function AdminPanel({
                   </>
                 ) : (
                   'Guardar trabajo'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+
+        {/* PASO 5: EDITAR TRABAJO EXISTENTE */}
+        {paso === 'editar-trabajo' && authToken && vehiculoDetalle && trabajoEditando && (
+          <form onSubmit={guardarEdicionTrabajo} className="space-y-4 py-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setTrabajoEditando(null)
+                setPaso('detalle')
+              }}
+              className="mb-2"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver al detalle
+            </Button>
+
+            <div className="rounded-lg bg-primary/5 p-3 text-sm">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Editando trabajo
+              </p>
+              <span className="font-semibold">{trabajoEditando.titulo}</span>
+              <span className="ml-2 text-muted-foreground">
+                · {vehiculoDetalle.marca} {vehiculoDetalle.modelo} ·{' '}
+                <span className="font-mono">{vehiculoDetalle.patente}</span>
+              </span>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="et-fecha" className="flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5" /> Fecha del trabajo *
+                </Label>
+                <Input
+                  id="et-fecha"
+                  type="date"
+                  value={nuevoTrabajo.fecha}
+                  onChange={(e) =>
+                    setNuevoTrabajo((nt) => ({ ...nt, fecha: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="et-km" className="flex items-center gap-1">
+                  <Gauge className="h-3.5 w-3.5" /> Kilometraje (opcional)
+                </Label>
+                <Input
+                  id="et-km"
+                  type="number"
+                  min="0"
+                  value={nuevoTrabajo.kilometraje}
+                  onChange={(e) =>
+                    setNuevoTrabajo((nt) => ({
+                      ...nt,
+                      kilometraje: e.target.value,
+                    }))
+                  }
+                  placeholder="Ej: 85400"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="et-titulo">Título del trabajo *</Label>
+              <Input
+                id="et-titulo"
+                value={nuevoTrabajo.titulo}
+                onChange={(e) =>
+                  setNuevoTrabajo((nt) => ({ ...nt, titulo: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="et-desc">Descripción *</Label>
+              <Textarea
+                id="et-desc"
+                value={nuevoTrabajo.descripcion}
+                onChange={(e) =>
+                  setNuevoTrabajo((nt) => ({
+                    ...nt,
+                    descripcion: e.target.value,
+                  }))
+                }
+                rows={3}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="et-precio">Precio (ARS) *</Label>
+                <Input
+                  id="et-precio"
+                  type="number"
+                  min="0"
+                  value={nuevoTrabajo.precio}
+                  onChange={(e) =>
+                    setNuevoTrabajo((nt) => ({
+                      ...nt,
+                      precio: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado</Label>
+                <Select
+                  value={nuevoTrabajo.estado}
+                  onValueChange={(v) =>
+                    setNuevoTrabajo((nt) => ({ ...nt, estado: v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESTADOS.map((e) => (
+                      <SelectItem key={e} value={e}>
+                        {e}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="et-prox">Próxima revisión</Label>
+                <Input
+                  id="et-prox"
+                  value={nuevoTrabajo.proximo}
+                  onChange={(e) =>
+                    setNuevoTrabajo((nt) => ({
+                      ...nt,
+                      proximo: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setTrabajoEditando(null)
+                  setPaso('detalle')
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={guardando}>
+                {guardando ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  'Guardar cambios'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+
+        {/* PASO 6: EDITAR DATOS DEL VEHÍCULO */}
+        {paso === 'editar-vehiculo' && authToken && vehiculoDetalle && (
+          <form onSubmit={guardarEdicionVehiculo} className="space-y-4 py-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setPaso('detalle')}
+              className="mb-2"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver al detalle
+            </Button>
+
+            <div className="rounded-lg bg-primary/5 p-3 text-sm">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Editando datos de
+              </p>
+              <span className="font-semibold">
+                {vehiculoDetalle.marca} {vehiculoDetalle.modelo}
+              </span>
+              <span className="ml-2 font-mono">{vehiculoDetalle.patente}</span>
+              <p className="mt-1 text-xs text-muted-foreground">
+                La patente no se puede modificar.
+              </p>
+            </div>
+
+            {/* Datos del titular */}
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-semibold">Datos del titular</legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Nombre y apellido</Label>
+                  <Input
+                    value={editVehiculo.cliente_nombre}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({
+                        ...ev,
+                        cliente_nombre: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Teléfono</Label>
+                  <Input
+                    value={editVehiculo.cliente_telefono}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({
+                        ...ev,
+                        cliente_telefono: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Email</Label>
+                  <Input
+                    type="email"
+                    value={editVehiculo.cliente_email}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({
+                        ...ev,
+                        cliente_email: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Dirección</Label>
+                  <Input
+                    value={editVehiculo.cliente_direccion}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({
+                        ...ev,
+                        cliente_direccion: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </fieldset>
+
+            {/* Datos del vehículo */}
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-semibold">Datos del vehículo</legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Marca</Label>
+                  <Input
+                    value={editVehiculo.marca}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({ ...ev, marca: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Modelo</Label>
+                  <Input
+                    value={editVehiculo.modelo}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({ ...ev, modelo: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Año</Label>
+                  <Input
+                    type="number"
+                    min="1950"
+                    max="2030"
+                    value={editVehiculo.anio}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({ ...ev, anio: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Color</Label>
+                  <Input
+                    value={editVehiculo.color}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({ ...ev, color: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Kilometraje</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editVehiculo.kilometraje}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({
+                        ...ev,
+                        kilometraje: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tipo</Label>
+                  <Select
+                    value={editVehiculo.tipo}
+                    onValueChange={(v) =>
+                      setEditVehiculo((ev) => ({ ...ev, tipo: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Auto">Auto</SelectItem>
+                      <SelectItem value="Camioneta">Camioneta</SelectItem>
+                      <SelectItem value="Moto">Moto</SelectItem>
+                      <SelectItem value="Utilitario">Utilitario</SelectItem>
+                      <SelectItem value="Otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Combustible</Label>
+                  <Select
+                    value={editVehiculo.combustible}
+                    onValueChange={(v) =>
+                      setEditVehiculo((ev) => ({ ...ev, combustible: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Nafta">Nafta</SelectItem>
+                      <SelectItem value="Diesel">Diesel</SelectItem>
+                      <SelectItem value="GNC">GNC</SelectItem>
+                      <SelectItem value="Eléctrico">Eléctrico</SelectItem>
+                      <SelectItem value="Híbrido">Híbrido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Notas</Label>
+                <Textarea
+                  value={editVehiculo.notas}
+                  onChange={(e) =>
+                    setEditVehiculo((ev) => ({ ...ev, notas: e.target.value }))
+                  }
+                  rows={3}
+                  placeholder="Notas internas del taller sobre este vehículo"
+                />
+              </div>
+            </fieldset>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPaso('detalle')}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={guardando}>
+                {guardando ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  'Guardar cambios'
                 )}
               </Button>
             </DialogFooter>

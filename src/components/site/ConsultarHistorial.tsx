@@ -4,8 +4,18 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { formatFecha, normalizarPatente } from '@/lib/format'
 import {
@@ -25,6 +35,8 @@ import {
   Palette,
   Camera,
   Clock,
+  Edit,
+  Save,
 } from 'lucide-react'
 
 interface Trabajo {
@@ -78,6 +90,63 @@ export function ConsultarHistorial() {
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null)
   const [noEncontrado, setNoEncontrado] = useState(false)
   const [fotoAmpliada, setFotoAmpliada] = useState<Foto | null>(null)
+
+  // Edición cliente
+  const [editando, setEditando] = useState(false)
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+  const [formEdicion, setFormEdicion] = useState({
+    color: '',
+    kilometraje: '',
+    notas: '',
+  })
+
+  const abrirEdicion = () => {
+    if (!vehiculo) return
+    setFormEdicion({
+      color: vehiculo.color || '',
+      kilometraje:
+        vehiculo.kilometraje != null ? String(vehiculo.kilometraje) : '',
+      notas: vehiculo.notas || '',
+    })
+    setEditando(true)
+  }
+
+  const guardarEdicionCliente = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!vehiculo) return
+    setGuardandoEdicion(true)
+    try {
+      const res = await fetch(`/api/vehiculos/${vehiculo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cliente: true,
+          color: formEdicion.color || null,
+          kilometraje: formEdicion.kilometraje
+            ? Number(formEdicion.kilometraje)
+            : null,
+          notas: formEdicion.notas || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      setVehiculo({ ...vehiculo, ...data.vehiculo })
+      toast({
+        title: 'Datos actualizados',
+        description: 'Tu vehículo se actualizó correctamente.',
+      })
+      setEditando(false)
+    } catch (err: unknown) {
+      toast({
+        title: 'No se pudo guardar',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setGuardandoEdicion(false)
+    }
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -323,6 +392,18 @@ export function ConsultarHistorial() {
                   </div>
                 )}
 
+                {/* Botón editar (cliente) */}
+                <div className="mb-5 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={abrirEdicion}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar mi vehículo
+                  </Button>
+                </div>
+
                 {/* Timeline de trabajos */}
                 <div>
                   <h3 className="mb-4 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -446,6 +527,91 @@ export function ConsultarHistorial() {
           </div>
         </div>
       )}
+
+      {/* Diálogo de edición (cliente) */}
+      <Dialog open={editando} onOpenChange={setEditando}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-primary" />
+              Editar mi vehículo
+            </DialogTitle>
+            <DialogDescription>
+              Actualizá los datos de tu {vehiculo?.marca} {vehiculo?.modelo}.
+              La marca, modelo, año y patente solo los puede modificar el
+              taller.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={guardarEdicionCliente} className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="c-color" className="flex items-center gap-1.5">
+                <Palette className="h-3.5 w-3.5" /> Color
+              </Label>
+              <Input
+                id="c-color"
+                value={formEdicion.color}
+                onChange={(e) =>
+                  setFormEdicion((f) => ({ ...f, color: e.target.value }))
+                }
+                placeholder="Ej: Gris, Blanco, Negro..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="c-km" className="flex items-center gap-1.5">
+                <Gauge className="h-3.5 w-3.5" /> Kilometraje actual
+              </Label>
+              <Input
+                id="c-km"
+                type="number"
+                min="0"
+                value={formEdicion.kilometraje}
+                onChange={(e) =>
+                  setFormEdicion((f) => ({ ...f, kilometraje: e.target.value }))
+                }
+                placeholder="Ej: 95000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="c-notas">Notas para el taller</Label>
+              <Textarea
+                id="c-notas"
+                value={formEdicion.notas}
+                onChange={(e) =>
+                  setFormEdicion((f) => ({ ...f, notas: e.target.value }))
+                }
+                placeholder="Avisanos si hay algún detalle, ruido o problema a revisar."
+                rows={4}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditando(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={guardandoEdicion}>
+                {guardandoEdicion ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Guardar cambios
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
