@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id        String     @id @default(cuid())
+  nombre    String
+  telefono  String
+  email     String?
+  direccion String?
+  vehiculos Vehiculo[]
+  createdAt DateTime   @default(now())
+}
+
+model Vehiculo {
+  id          String    @id @default(cuid())
+  marca       String
+  modelo      String
+  anio        Int
+  patente     String    @unique
+  color       String?
+  kilometraje Int?
+  tipo        String    // Auto, Camioneta, Moto, Utilitario
+  combustible String?   // Nafta, Diesel, GNC, Eléctrico, Híbrido
+  notas       String?
+  clienteId   String
+  cliente     Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  trabajos    Trabajo[]
+  createdAt   DateTime  @default(now())
+}
+
+model Trabajo {
+  id          String    @id @default(cuid())
+  vehiculoId  String
+  vehiculo    Vehiculo  @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  servicioId  String?
+  servicio    Servicio? @relation(fields: [servicioId], references: [id])
+  titulo      String
+  descripcion String
+  precio      Float
+  estado      String    // Pendiente, En proceso, Completado
+  fecha       DateTime  @default(now())
+  proximo     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Servicio {
+  id          String    @id @default(cuid())
+  nombre      String
+  descripcion String
+  precioBase  Float?
+  categoria   String
+  icono       String?
+  destacado   Boolean   @default(false)
+  activo      Boolean   @default(true)
+  trabajos    Trabajo[]
+  createdAt   DateTime  @default(now())
+}
