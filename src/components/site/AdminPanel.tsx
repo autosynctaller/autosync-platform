@@ -35,6 +35,12 @@ import {
   Wrench,
   ChevronRight,
   ArrowLeft,
+  Camera,
+  Trash2,
+  Image as ImageIcon,
+  Gauge,
+  Calendar,
+  X,
 } from 'lucide-react'
 
 interface ServicioOption {
@@ -62,8 +68,16 @@ interface TrabajoDetalle {
   precio: number
   estado: string
   fecha: string
+  kilometraje: number | null
   proximo: string | null
   servicio: { nombre: string; categoria: string } | null
+}
+
+interface FotoDetalle {
+  id: string
+  url: string
+  descripcion: string | null
+  createdAt: string
 }
 
 interface VehiculoDetalle {
@@ -84,6 +98,7 @@ interface VehiculoDetalle {
     direccion: string | null
   }
   trabajos: TrabajoDetalle[]
+  fotos: FotoDetalle[]
 }
 
 const ESTADOS = ['Completado', 'En proceso', 'Pendiente']
@@ -122,8 +137,15 @@ export function AdminPanel({
     precio: '',
     estado: 'Completado',
     proximo: '',
+    fecha: '', // YYYY-MM-DD
+    kilometraje: '',
   })
   const [guardando, setGuardando] = useState(false)
+
+  // fotos
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [descripcionFoto, setDescripcionFoto] = useState('')
+  const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null)
 
   // Cerrar sesión
   const logout = () => {
@@ -240,6 +262,10 @@ export function AdminPanel({
           precio: Number(nuevoTrabajo.precio),
           estado: nuevoTrabajo.estado,
           proximo: nuevoTrabajo.proximo || null,
+          fecha: nuevoTrabajo.fecha || null,
+          kilometraje: nuevoTrabajo.kilometraje
+            ? Number(nuevoTrabajo.kilometraje)
+            : null,
         }),
       })
       const data = await res.json()
@@ -248,6 +274,8 @@ export function AdminPanel({
         title: 'Trabajo registrado',
         description: 'El historial del vehículo fue actualizado.',
       })
+      // Pre-cargar la fecha de hoy para el próximo trabajo
+      const hoy = new Date().toISOString().split('T')[0]
       setNuevoTrabajo({
         servicioId: '',
         titulo: '',
@@ -255,6 +283,8 @@ export function AdminPanel({
         precio: '',
         estado: 'Completado',
         proximo: '',
+        fecha: hoy,
+        kilometraje: '',
       })
       // recargar detalle
       await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
@@ -268,6 +298,73 @@ export function AdminPanel({
       })
     } finally {
       setGuardando(false)
+    }
+  }
+
+  // Subir foto
+  const subirFoto = async (file: File) => {
+    if (!vehiculoDetalle || !authToken) return
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Foto muy pesada',
+        description: 'Máximo 5 MB por foto.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setSubiendoFoto(true)
+    try {
+      const formData = new FormData()
+      formData.append('foto', file)
+      formData.append('descripcion', descripcionFoto)
+      const res = await fetch(`/api/vehiculos/${vehiculoDetalle.id}/fotos`, {
+        method: 'POST',
+        headers: { 'x-admin-pin': authToken },
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al subir foto')
+      toast({ title: 'Foto agregada', description: 'La foto se guardó correctamente.' })
+      setDescripcionFoto('')
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al subir foto',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSubiendoFoto(false)
+    }
+  }
+
+  // Borrar foto
+  const borrarFoto = async (fotoId: string) => {
+    if (!vehiculoDetalle || !authToken) return
+    if (!confirm('¿Seguro que querés borrar esta foto?')) return
+    try {
+      const res = await fetch(
+        `/api/vehiculos/${vehiculoDetalle.id}/fotos/${fotoId}`,
+        {
+          method: 'DELETE',
+          headers: { 'x-admin-pin': authToken },
+        },
+      )
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error al borrar')
+      }
+      toast({ title: 'Foto eliminada' })
+      setFotoSeleccionada(null)
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al borrar foto',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -459,6 +556,7 @@ export function AdminPanel({
                         size="sm"
                         onClick={() => {
                           // El precio lo carga el admin manualmente (control interno)
+                          const hoy = new Date().toISOString().split('T')[0]
                           setNuevoTrabajo({
                             servicioId: '',
                             titulo: '',
@@ -466,6 +564,9 @@ export function AdminPanel({
                             precio: '',
                             estado: 'Completado',
                             proximo: '',
+                            fecha: hoy,
+                            kilometraje:
+                              vehiculoDetalle.kilometraje?.toString() || '',
                           })
                           setPaso('cargar')
                         }}
@@ -476,6 +577,119 @@ export function AdminPanel({
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Sección de fotos del vehículo */}
+                <div>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Camera className="h-4 w-4 text-primary" />
+                    Fotos del vehículo ({vehiculoDetalle.fotos.length}/8)
+                  </h4>
+
+                  {/* Subir nueva foto */}
+                  <div className="mb-3 rounded-lg border border-dashed border-border/60 bg-muted/30 p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Input
+                        value={descripcionFoto}
+                        onChange={(e) => setDescripcionFoto(e.target.value)}
+                        placeholder="Descripción (opcional)"
+                        className="flex-1"
+                      />
+                      <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                        {subiendoFoto ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Subiendo...
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="h-4 w-4" />
+                            Subir foto
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          disabled={subiendoFoto || vehiculoDetalle.fotos.length >= 8}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) subirFoto(f)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {vehiculoDetalle.fotos.length >= 8 && (
+                      <p className="mt-2 text-xs text-amber-600">
+                        Alcanzaste el máximo de 8 fotos. Eliminá alguna para subir otra.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Grilla de fotos */}
+                  {vehiculoDetalle.fotos.length === 0 ? (
+                    <Card className="border-dashed">
+                      <CardContent className="flex flex-col items-center gap-2 p-6 text-center text-sm text-muted-foreground">
+                        <ImageIcon className="h-8 w-8 opacity-40" />
+                        <span>Aún no hay fotos de este vehículo.</span>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {vehiculoDetalle.fotos.map((foto) => (
+                        <div
+                          key={foto.id}
+                          className="group relative aspect-square overflow-hidden rounded-md border border-border/60"
+                        >
+                          <img
+                            src={foto.url}
+                            alt={foto.descripcion || 'Foto del vehículo'}
+                            className="h-full w-full cursor-pointer object-cover"
+                            onClick={() => setFotoSeleccionada(foto.url)}
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              borrarFoto(foto.id)
+                            }}
+                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                            aria-label="Eliminar foto"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                          {foto.descripcion && (
+                            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-[10px] text-white">
+                              {foto.descripcion}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Visor de foto ampliada */}
+                  {fotoSeleccionada && (
+                    <div
+                      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+                      onClick={() => setFotoSeleccionada(null)}
+                    >
+                      <button
+                        className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                        onClick={() => setFotoSeleccionada(null)}
+                        aria-label="Cerrar"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                      <img
+                        src={fotoSeleccionada}
+                        alt="Foto ampliada"
+                        className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
@@ -517,7 +731,16 @@ export function AdminPanel({
                                 {t.descripcion}
                               </p>
                               <p className="mt-1 text-[11px] text-muted-foreground">
-                                {formatFecha(t.fecha)}
+                                <span className="inline-flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatFecha(t.fecha)}
+                                </span>
+                                {t.kilometraje != null && (
+                                  <span className="ml-2 inline-flex items-center gap-1">
+                                    <Gauge className="h-3 w-3" />
+                                    {t.kilometraje.toLocaleString('es-AR')} km
+                                  </span>
+                                )}
                                 {t.proximo && ` · Próximo: ${t.proximo}`}
                               </p>
                             </div>
@@ -618,6 +841,41 @@ export function AdminPanel({
                 placeholder="Detallá qué se hizo, repuestos usados, observaciones..."
                 rows={3}
               />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="t-fecha" className="flex items-center gap-1">
+                  <Calendar className="h-3.5 w-3.5" /> Fecha del trabajo *
+                </Label>
+                <Input
+                  id="t-fecha"
+                  type="date"
+                  value={nuevoTrabajo.fecha}
+                  onChange={(e) =>
+                    setNuevoTrabajo((nt) => ({ ...nt, fecha: e.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="t-km" className="flex items-center gap-1">
+                  <Gauge className="h-3.5 w-3.5" /> Kilometraje (opcional)
+                </Label>
+                <Input
+                  id="t-km"
+                  type="number"
+                  min="0"
+                  value={nuevoTrabajo.kilometraje}
+                  onChange={(e) =>
+                    setNuevoTrabajo((nt) => ({
+                      ...nt,
+                      kilometraje: e.target.value,
+                    }))
+                  }
+                  placeholder="Ej: 85400"
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">

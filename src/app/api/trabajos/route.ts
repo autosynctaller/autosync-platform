@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
       precio,
       estado,
       proximo,
+      fecha,
+      kilometraje,
     } = body
 
     if (!vehiculoId || !titulo || !descripcion || precio == null) {
@@ -46,6 +48,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Construir el objeto de fecha: si viene, usarla; si no, ahora
+    let fechaTrabajo: Date = new Date()
+    if (fecha) {
+      const parsed = new Date(fecha)
+      if (!isNaN(parsed.getTime())) {
+        fechaTrabajo = parsed
+      }
+    }
+
     const trabajo = await db.trabajo.create({
       data: {
         vehiculoId,
@@ -55,9 +66,25 @@ export async function POST(req: NextRequest) {
         precio: Number(precio),
         estado: estado || 'Completado',
         proximo: proximo || null,
+        fecha: fechaTrabajo,
+        kilometraje: kilometraje ? Number(kilometraje) : null,
       },
       include: { servicio: true },
     })
+
+    // Si el trabajo tiene kilometraje, actualizar el kilometraje actual del vehículo
+    if (kilometraje) {
+      const km = Number(kilometraje)
+      const vehiculoActualizado = await db.vehiculo.findUnique({
+        where: { id: vehiculoId },
+      })
+      if (vehiculoActualizado && (vehiculoActualizado.kilometraje == null || km > vehiculoActualizado.kilometraje)) {
+        await db.vehiculo.update({
+          where: { id: vehiculoId },
+          data: { kilometraje: km },
+        })
+      }
+    }
 
     return NextResponse.json({ trabajo }, { status: 201 })
   } catch (error) {

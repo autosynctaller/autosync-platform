@@ -18,17 +18,31 @@ import {
   Loader2,
   FileX2,
   AlertCircle,
+  Gauge,
+  X,
+  MapPin,
+  Fuel,
+  Palette,
+  Camera,
+  Clock,
 } from 'lucide-react'
 
 interface Trabajo {
   id: string
   titulo: string
   descripcion: string
-  precio: number
   estado: string
   fecha: string
+  kilometraje: number | null
   proximo: string | null
   servicio: { nombre: string; categoria: string } | null
+}
+
+interface Foto {
+  id: string
+  url: string
+  descripcion: string | null
+  createdAt: string
 }
 
 interface Vehiculo {
@@ -48,6 +62,7 @@ interface Vehiculo {
     email: string | null
   }
   trabajos: Trabajo[]
+  fotos: Foto[]
 }
 
 const ESTADO_COLORS: Record<string, string> = {
@@ -62,6 +77,7 @@ export function ConsultarHistorial() {
   const [loading, setLoading] = useState(false)
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null)
   const [noEncontrado, setNoEncontrado] = useState(false)
+  const [fotoAmpliada, setFotoAmpliada] = useState<Foto | null>(null)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -146,14 +162,12 @@ export function ConsultarHistorial() {
           </Button>
         </form>
 
-        {/* Estado: cargando */}
         {loading && (
           <div className="mx-auto mt-8 max-w-3xl">
             <Skeleton className="h-64 w-full rounded-xl" />
           </div>
         )}
 
-        {/* Estado: no encontrado */}
         {noEncontrado && !loading && (
           <Card className="mx-auto mt-8 max-w-3xl border-amber-200 bg-amber-50">
             <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
@@ -191,19 +205,18 @@ export function ConsultarHistorial() {
           </Card>
         )}
 
-        {/* Estado: resultado */}
         {vehiculo && !loading && (
           <div className="mx-auto mt-8 max-w-4xl space-y-6">
-            {/* Resumen del vehículo */}
-            <Card className="border-border/60">
-              <CardHeader className="bg-zinc-900 text-zinc-50">
+            {/* Tarjeta principal del vehículo */}
+            <Card className="overflow-hidden border-border/60">
+              <CardHeader className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-6 text-zinc-50">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                       <Car className="h-6 w-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl text-zinc-50">
+                      <CardTitle className="text-xl text-zinc-50 sm:text-2xl">
                         {vehiculo.marca} {vehiculo.modelo}
                       </CardTitle>
                       <p className="mt-0.5 text-sm text-zinc-300">
@@ -222,124 +235,222 @@ export function ConsultarHistorial() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-5">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <InfoItem
-                    icon={User}
-                    label="Titular"
-                    value={vehiculo.cliente.nombre}
-                  />
-                  <InfoItem
-                    icon={Phone}
-                    label="Teléfono"
-                    value={vehiculo.cliente.telefono}
-                  />
-                  <InfoItem
-                    icon={Car}
-                    label="Color"
-                    value={vehiculo.color || '—'}
-                  />
-                  <InfoItem
-                    icon={Wrench}
-                    label="Kilometraje"
-                    value={
-                      vehiculo.kilometraje
-                        ? `${vehiculo.kilometraje.toLocaleString('es-AR')} km`
-                        : '—'
-                    }
-                  />
+
+              {/* Galería de fotos (si existen) */}
+              {vehiculo.fotos.length > 0 && (
+                <div className="border-b border-border/60 bg-muted/30 p-4 sm:p-6">
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Camera className="h-4 w-4 text-primary" />
+                    Fotos del vehículo ({vehiculo.fotos.length})
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                    {vehiculo.fotos.map((foto) => (
+                      <button
+                        key={foto.id}
+                        onClick={() => setFotoAmpliada(foto)}
+                        className="group relative aspect-square overflow-hidden rounded-md border border-border/60 bg-card transition-transform hover:scale-105"
+                      >
+                        <img
+                          src={foto.url}
+                          alt={foto.descripcion || 'Foto del vehículo'}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              <CardContent className="p-6">
+                {/* Ficha técnica */}
+                <div className="mb-5">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Ficha técnica
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <FichaItem
+                      icon={User}
+                      label="Titular"
+                      value={vehiculo.cliente.nombre}
+                    />
+                    <FichaItem
+                      icon={Phone}
+                      label="Teléfono"
+                      value={vehiculo.cliente.telefono}
+                    />
+                    <FichaItem
+                      icon={Palette}
+                      label="Color"
+                      value={vehiculo.color || '—'}
+                    />
+                    <FichaItem
+                      icon={Gauge}
+                      label="Kilometraje"
+                      value={
+                        vehiculo.kilometraje
+                          ? `${vehiculo.kilometraje.toLocaleString('es-AR')} km`
+                          : '—'
+                      }
+                    />
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <FichaItem
+                      icon={Car}
+                      label="Tipo"
+                      value={vehiculo.tipo}
+                    />
+                    {vehiculo.combustible && (
+                      <FichaItem
+                        icon={Fuel}
+                        label="Combustible"
+                        value={vehiculo.combustible}
+                      />
+                    )}
+                    <FichaItem
+                      icon={Calendar}
+                      label="Año"
+                      value={String(vehiculo.anio)}
+                    />
+                  </div>
+                </div>
+
                 {vehiculo.notas && (
-                  <div className="mt-4 rounded-lg bg-muted p-3">
+                  <div className="mb-5 rounded-lg border-l-4 border-primary bg-primary/5 p-3">
                     <p className="text-xs font-semibold text-muted-foreground">
                       Notas registradas
                     </p>
                     <p className="mt-1 text-sm">{vehiculo.notas}</p>
                   </div>
                 )}
+
+                {/* Timeline de trabajos */}
+                <div>
+                  <h3 className="mb-4 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-primary" />
+                      Trabajos realizados
+                    </span>
+                    <Badge variant="secondary">
+                      {vehiculo.trabajos.length}
+                    </Badge>
+                  </h3>
+
+                  {vehiculo.trabajos.length === 0 ? (
+                    <Card className="border-dashed">
+                      <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
+                        <FileX2 className="h-10 w-10 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">Sin trabajos registrados aún</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Cuando realicemos el primer trabajo en tu vehículo, lo
+                            vas a ver acá.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <ol className="relative space-y-4 border-l-2 border-border/60 pl-6">
+                      {vehiculo.trabajos.map((t, idx) => (
+                        <li key={t.id} className="relative">
+                          {/* Punto del timeline */}
+                          <span className="absolute -left-[31px] top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] font-bold text-primary-foreground">
+                            {vehiculo.trabajos.length - idx}
+                          </span>
+
+                          <div className="rounded-xl border border-border/60 bg-card p-4 sm:p-5">
+                            {/* Fecha y km */}
+                            <div className="mb-2 flex flex-wrap items-center gap-3 text-xs">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-zinc-900 px-2 py-1 font-medium text-zinc-50">
+                                <Calendar className="h-3 w-3" />
+                                {formatFecha(t.fecha)}
+                              </span>
+                              {t.kilometraje != null && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1 font-medium text-primary">
+                                  <Gauge className="h-3 w-3" />
+                                  {t.kilometraje.toLocaleString('es-AR')} km
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Título y badges */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="text-base font-semibold">
+                                {t.titulo}
+                              </h4>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                  ESTADO_COLORS[t.estado] ||
+                                  'bg-muted text-muted-foreground'
+                                }`}
+                              >
+                                {t.estado}
+                              </span>
+                              {t.servicio && (
+                                <Badge variant="outline">
+                                  {t.servicio.categoria}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Descripción */}
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {t.descripcion}
+                            </p>
+
+                            {/* Próxima revisión */}
+                            {t.proximo && (
+                              <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
+                                <Clock className="h-3.5 w-3.5" />
+                                Próxima revisión: {t.proximo}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
               </CardContent>
             </Card>
-
-            {/* Lista de trabajos */}
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-lg font-semibold">
-                  <Wrench className="h-5 w-5 text-primary" />
-                  Trabajos realizados
-                  <Badge variant="secondary">
-                    {vehiculo.trabajos.length}
-                  </Badge>
-                </h3>
-              </div>
-
-              {vehiculo.trabajos.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="flex flex-col items-center gap-3 p-10 text-center">
-                    <FileX2 className="h-10 w-10 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Sin trabajos registrados aún</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Cuando realicemos el primer trabajo en tu vehículo, lo
-                        vas a ver acá.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <ol className="space-y-3">
-                  {vehiculo.trabajos.map((t) => (
-                    <li
-                      key={t.id}
-                      className="rounded-xl border border-border/60 bg-card p-4 sm:p-5"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="font-semibold">{t.titulo}</h4>
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                                ESTADO_COLORS[t.estado] ||
-                                'bg-muted text-muted-foreground'
-                              }`}
-                            >
-                              {t.estado}
-                            </span>
-                            {t.servicio && (
-                              <Badge variant="outline">
-                                {t.servicio.categoria}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="mt-1.5 text-sm text-muted-foreground">
-                            {t.descripcion}
-                          </p>
-                          <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3.5 w-3.5" />
-                              {formatFecha(t.fecha)}
-                            </span>
-                            {t.proximo && (
-                              <span className="flex items-center gap-1 font-medium text-primary">
-                                <AlertCircle className="h-3.5 w-3.5" />
-                                Próximo: {t.proximo}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
           </div>
         )}
       </div>
+
+      {/* Visor de foto ampliada */}
+      {fotoAmpliada && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setFotoAmpliada(null)}
+        >
+          <button
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            onClick={() => setFotoAmpliada(null)}
+            aria-label="Cerrar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div
+            className="max-h-[90vh] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={fotoAmpliada.url}
+              alt={fotoAmpliada.descripcion || 'Foto del vehículo'}
+              className="max-h-[80vh] max-w-full rounded-lg object-contain"
+            />
+            {fotoAmpliada.descripcion && (
+              <p className="mt-3 text-center text-sm text-white">
+                {fotoAmpliada.descripcion}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
 
-function InfoItem({
+function FichaItem({
   icon: Icon,
   label,
   value,
@@ -349,15 +460,15 @@ function InfoItem({
   value: string
 }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        <Icon className="h-4 w-4" />
+    <div className="flex items-start gap-2.5 rounded-lg border border-border/40 bg-background/50 p-2.5">
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon className="h-3.5 w-3.5" />
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
-        <p className="text-sm font-medium">{value}</p>
+        <p className="truncate text-sm font-medium">{value}</p>
       </div>
     </div>
   )

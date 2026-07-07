@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-// GET: detalle de un vehículo con sus trabajos
+// GET: detalle de un vehículo con sus trabajos y fotos
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -15,6 +15,9 @@ export async function GET(
         trabajos: {
           orderBy: { fecha: 'desc' },
           include: { servicio: true },
+        },
+        fotos: {
+          orderBy: { createdAt: 'desc' },
         },
       },
     })

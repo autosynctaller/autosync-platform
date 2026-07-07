@@ -21,36 +21,38 @@ model Cliente {
 }
 
 model Vehiculo {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
   marca       String
   modelo      String
   anio        Int
-  patente     String    @unique
+  patente     String        @unique
   color       String?
   kilometraje Int?
-  tipo        String    // Auto, Camioneta, Moto, Utilitario
-  combustible String?   // Nafta, Diesel, GNC, Eléctrico, Híbrido
+  tipo        String        // Auto, Camioneta, Moto, Utilitario
+  combustible String?       // Nafta, Diesel, GNC, Eléctrico, Híbrido
   notas       String?
   clienteId   String
-  cliente     Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  cliente     Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   trabajos    Trabajo[]
-  createdAt   DateTime  @default(now())
+  fotos       FotoVehiculo[]
+  createdAt   DateTime      @default(now())
 }
 
 model Trabajo {
-  id          String    @id @default(cuid())
-  vehiculoId  String
-  vehiculo    Vehiculo  @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
-  servicioId  String?
-  servicio    Servicio? @relation(fields: [servicioId], references: [id])
-  titulo      String
-  descripcion String
-  precio      Float
-  estado      String    // Pendiente, En proceso, Completado
-  fecha       DateTime  @default(now())
-  proximo     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  vehiculoId   String
+  vehiculo     Vehiculo  @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  servicioId   String?
+  servicio     Servicio? @relation(fields: [servicioId], references: [id])
+  titulo       String
+  descripcion  String
+  precio       Float
+  estado       String    // Pendiente, En proceso, Completado
+  fecha        DateTime  @default(now())
+  kilometraje  Int?      // KM del vehículo al momento del trabajo
+  proximo      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Servicio {
@@ -64,4 +66,13 @@ model Servicio {
   activo      Boolean   @default(true)
   trabajos    Trabajo[]
   createdAt   DateTime  @default(now())
+}
+
+model FotoVehiculo {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  url         String   // Ruta relativa /uploads/vehiculos/...
+  descripcion String?
+  createdAt   DateTime @default(now())
 }

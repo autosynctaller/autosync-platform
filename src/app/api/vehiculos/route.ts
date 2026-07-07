@@ -37,6 +37,9 @@ export async function GET(req: NextRequest) {
             orderBy: { fecha: 'desc' },
             include: { servicio: true },
           },
+          fotos: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
       })
 
