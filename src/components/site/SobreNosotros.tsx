@@ -73,14 +73,14 @@ export function SobreNosotros() {
                   Información del taller
                 </p>
                 <h3 className="mt-2 text-2xl font-bold">
-                  Taller Mecánica MDP
+                  AutoSync
                 </h3>
               </div>
               <div className="divide-y divide-border/60">
                 <InfoRow
                   icon={MapPin}
                   label="Dirección"
-                  value="Av. Colón 1234, Mar del Plata, Buenos Aires"
+                  value="Falucho 4657, Mar del Plata, Buenos Aires"
                 />
                 <InfoRow
                   icon={Wrench}

@@ -571,10 +571,6 @@ export function AdminPanel({
                     ...nt,
                     servicioId: v,
                     titulo: servicio?.nombre || nt.titulo,
-                    precio:
-                      servicio?.precioBase != null
-                        ? String(servicio.precioBase)
-                        : nt.precio,
                   }))
                 }}
               >
@@ -584,8 +580,7 @@ export function AdminPanel({
                 <SelectContent>
                   {servicios.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.nombre} — {s.categoria} (
-                      {formatPrecio(s.precioBase)})
+                      {s.nombre} — {s.categoria}
                     </SelectItem>
                   ))}
                 </SelectContent>

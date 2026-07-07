@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
-import { formatPrecio } from '@/lib/format'
 import { Car, User, CheckCircle2, Loader2 } from 'lucide-react'
 
 const TIPOS = ['Auto', 'Camioneta', 'Moto', 'Utilitario', 'Otro']
@@ -346,9 +345,9 @@ export function RegistrarVehiculo() {
         )}
 
         <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">
-          Los precios publicados en la sección de servicios ({formatPrecio(0).replace(/0.*$/, 'X')}) son orientativos y pueden
-          variar según el modelo y estado del vehículo. Te confirmaremos el
-          presupuesto antes de comenzar cualquier trabajo.
+          Los precios de los servicios se confirman al momento del presupuesto,
+          teniendo en cuenta el modelo y estado del vehículo. Te avisamos antes
+          de comenzar cualquier trabajo.
         </p>
       </div>
     </section>

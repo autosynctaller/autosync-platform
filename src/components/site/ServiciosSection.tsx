@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatPrecio } from '@/lib/format'
 import {
   Wrench,
   Gauge,
@@ -120,16 +119,11 @@ export function ServiciosSection() {
                       {s.descripcion}
                     </p>
                     <div className="mt-auto flex items-end justify-between pt-4">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Desde
-                        </p>
-                        <p className="text-lg font-bold text-foreground">
-                          {formatPrecio(s.precioBase)}
-                        </p>
-                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Consultá disponibilidad y valor
+                      </p>
                       <button
-                        onClick={() => scrollTo('#registrar')}
+                        onClick={() => scrollTo('#contacto')}
                         className="text-xs font-semibold text-primary hover:underline"
                       >
                         Reservar →

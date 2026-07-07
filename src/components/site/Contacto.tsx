@@ -4,6 +4,9 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react'
 
+const WHATSAPP = '2235941522'
+const TEL_FORMATO = '(0223) 594-1522'
+
 export function Contacto() {
   return (
     <section
@@ -19,7 +22,7 @@ export function Contacto() {
             Estamos en Mar del Plata, listos para atenderte
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Llamanos, escribinos por WhatsApp o pasá por el taller. Te
+            Escribinos por WhatsApp, llamanos o pasá por el taller. Te
             asesoramos sin compromiso y coordinamos un turno que se acomode a tu
             rutina.
           </p>
@@ -36,10 +39,10 @@ export function Contacto() {
                   Teléfono
                 </p>
                 <a
-                  href="tel:+542231234567"
+                  href={`tel:+549${WHATSAPP}`}
                   className="mt-0.5 block text-lg font-semibold hover:text-primary"
                 >
-                  (0223) 123-4567
+                  {TEL_FORMATO}
                 </a>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -58,12 +61,12 @@ export function Contacto() {
                   WhatsApp
                 </p>
                 <a
-                  href="https://wa.me/5492231234567"
+                  href={`https://wa.me/549${WHATSAPP}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-0.5 block text-lg font-semibold hover:text-emerald-600"
                 >
-                  +54 9 223 123-4567
+                  +54 9 223 594-1522
                 </a>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -75,21 +78,18 @@ export function Contacto() {
           <Card className="border-border/60">
             <CardContent className="flex flex-col items-start gap-3 p-6">
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Mail className="h-5 w-5" />
+                <MapPin className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Email
+                  Dirección
                 </p>
-                <a
-                  href="mailto:contacto@tallermdp.com.ar"
-                  className="mt-0.5 block text-lg font-semibold hover:text-primary"
-                >
-                  contacto@tallermdp.com.ar
-                </a>
+                <p className="mt-0.5 text-lg font-semibold">
+                  Falucho 4657
+                </p>
               </div>
               <p className="text-sm text-muted-foreground">
-                Para presupuestos y consultas detalladas.
+                Mar del Plata, Buenos Aires.
               </p>
             </CardContent>
           </Card>
@@ -103,7 +103,7 @@ export function Contacto() {
                 <h3 className="text-lg font-semibold">Dónde estamos</h3>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Av. Colón 1234, entre calle 50 y 60.
+                Falucho 4657, entre las calles cercanas al barrio.
                 <br />
                 Mar del Plata, Buenos Aires, Argentina.
               </p>
@@ -139,7 +139,7 @@ export function Contacto() {
             {/* Mapa */}
             <div className="min-h-[280px] bg-muted">
               <iframe
-                title="Mapa del taller en Mar del Plata"
+                title="Mapa de AutoSync en Mar del Plata"
                 src="https://www.openstreetmap.org/export/embed.html?bbox=-57.5650%2C-38.0120%2C-57.5450%2C-37.9920&layer=mapnik&marker=-38.0020%2C-57.5550"
                 className="h-full min-h-[280px] w-full border-0"
                 loading="lazy"

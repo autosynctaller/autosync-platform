@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/sheet'
 import { Menu, Wrench, Phone } from 'lucide-react'
 
+const WHATSAPP = '2235941522'
+
 const NAV_LINKS = [
   { href: '#inicio', label: 'Inicio' },
   { href: '#servicios', label: 'Servicios' },
@@ -43,7 +45,7 @@ export function Header() {
           </div>
           <div className="flex flex-col items-start leading-tight">
             <span className="text-sm font-bold tracking-tight">
-              Taller Mecánica MDP
+              AutoSync
             </span>
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
               Mar del Plata
@@ -69,7 +71,7 @@ export function Header() {
         {/* CTA escritorio */}
         <div className="hidden items-center gap-2 lg:flex">
           <Button asChild size="sm">
-            <a href="tel:+542231234567" className="flex items-center gap-2">
+            <a href={`tel:+549${WHATSAPP}`} className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
               Llamar
             </a>
@@ -104,7 +106,7 @@ export function Header() {
                 </Button>
               ))}
               <Button asChild className="mt-3">
-                <a href="tel:+542231234567" className="flex items-center gap-2">
+                <a href={`tel:+549${WHATSAPP}`} className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
                   Llamar al taller
                 </a>

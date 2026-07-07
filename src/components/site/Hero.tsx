@@ -102,7 +102,7 @@ export function Hero() {
               <div className="grid grid-cols-2 gap-4">
                 <StatCard label="Años de experiencia" value="20+" />
                 <StatCard label="Vehículos atendidos" value="8.500+" />
-                <StatCard label="Servicios activos" value="12" />
+                <StatCard label="Servicios activos" value="11" />
                 <StatCard label="Rating promedio" value="4.9 ★" />
               </div>
 
@@ -113,7 +113,7 @@ export function Hero() {
                 <div>
                   <p className="text-xs text-zinc-400">Reservá tu turno</p>
                   <p className="text-sm font-semibold text-white">
-                    (0223) 123-4567
+                    (0223) 594-1522
                   </p>
                 </div>
               </div>

@@ -57,7 +57,7 @@ model Servicio {
   id          String    @id @default(cuid())
   nombre      String
   descripcion String
-  precioBase  Float?
+  precioBase  Float?   // Opcional - los precios se manejan por trabajo, no por catálogo público
   categoria   String
   icono       String?
   destacado   Boolean   @default(false)

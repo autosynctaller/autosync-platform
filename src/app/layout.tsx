@@ -14,12 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Taller Mecánica Mar del Plata | Servicio Automotor Integral",
+  title: "AutoSync | Taller Mecánico en Mar del Plata, Buenos Aires",
   description:
-    "Taller mecánico en Mar del Plata, Buenos Aires. Cambios de aceite, frenos, diagnóstico computarizado, suspensión, service programado y más. Registrá tu vehículo y llevá un historial completo de los trabajos realizados.",
+    "AutoSync: taller mecánico en Mar del Plata, Buenos Aires. Cambios de aceite, frenos, diagnóstico computarizado, suspensión, service programado y más. Registrá tu vehículo y llevá un historial completo de los trabajos realizados.",
   keywords: [
     "taller mecánico",
     "Mar del Plata",
+    "AutoSync",
     "mecánica automotor",
     "cambio de aceite",
     "frenos",
@@ -27,14 +28,14 @@ export const metadata: Metadata = {
     "service programado",
     "historial de servicio",
   ],
-  authors: [{ name: "Taller Mecánica MDP" }],
+  authors: [{ name: "AutoSync" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Taller Mecánica Mar del Plata",
+    title: "AutoSync | Taller Mecánico en Mar del Plata",
     description: "Servicio automotor integral en Mar del Plata, Buenos Aires.",
-    siteName: "Taller Mecánica MDP",
+    siteName: "AutoSync",
     type: "website",
   },
 };

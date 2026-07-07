@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Wrench, Lock, MapPin, Phone, Clock } from 'lucide-react'
 import { AdminPanel } from './AdminPanel'
 
+const WHATSAPP = '2235941522'
+
 export function Footer() {
   const [adminOpen, setAdminOpen] = useState(false)
 
@@ -20,7 +22,7 @@ export function Footer() {
               </div>
               <div>
                 <p className="text-sm font-bold text-white">
-                  Taller Mecánica MDP
+                  AutoSync
                 </p>
                 <p className="text-[10px] uppercase tracking-widest text-zinc-500">
                   Mar del Plata · Buenos Aires
@@ -28,8 +30,9 @@ export function Footer() {
               </div>
             </div>
             <p className="mt-4 max-w-md text-sm text-zinc-400">
-              Más de 20 años atendiendo vehículos en la ciudad feliz. Servicio
-              automotor integral con garantía escrita y precios honestos.
+              Taller mecánico con más de 20 años de trayectoria en la ciudad
+              feliz. Servicio automotor integral con garantía escrita y precios
+              honestos.
             </p>
           </div>
 
@@ -41,15 +44,15 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>Av. Colón 1234, Mar del Plata</span>
+                <span>Falucho 4657, Mar del Plata</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 shrink-0 text-primary" />
                 <a
-                  href="tel:+542231234567"
+                  href={`tel:+549${WHATSAPP}`}
                   className="hover:text-white"
                 >
-                  (0223) 123-4567
+                  (0223) 594-1522
                 </a>
               </li>
               <li className="flex items-start gap-2">
@@ -81,8 +84,8 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-zinc-800 pt-6 text-xs text-zinc-500 sm:flex-row">
           <p>
-            © {new Date().getFullYear()} Taller Mecánica MDP · Todos los
-            derechos reservados.
+            © {new Date().getFullYear()} AutoSync · Todos los derechos
+            reservados.
           </p>
           <p>Hecho con dedicación para los marplatenses.</p>
         </div>
