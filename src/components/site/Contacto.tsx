@@ -2,10 +2,18 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react'
+import { Phone, MapPin, Clock, MessageCircle } from 'lucide-react'
 
 const WHATSAPP = '2235941522'
 const TEL_FORMATO = '(0223) 594-1522'
+
+// Coordenadas reales de Falucho 4657, Mar del Plata
+const LAT = -37.9945347
+const LON = -57.5720344
+
+// bbox = un rectángulo pequeño centrado en la dirección
+const DELTA = 0.005
+const BBOX = `${LON - DELTA}%2C${LAT - DELTA}%2C${LON + DELTA}%2C${LAT + DELTA}`
 
 export function Contacto() {
   return (
@@ -103,13 +111,12 @@ export function Contacto() {
                 <h3 className="text-lg font-semibold">Dónde estamos</h3>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Falucho 4657, entre las calles cercanas al barrio.
+                Falucho 4657, barrio Don Bosco.
                 <br />
                 Mar del Plata, Buenos Aires, Argentina.
               </p>
               <p className="mt-4 text-xs text-muted-foreground">
-                Colectivos que te dejan cerca: líneas 522, 583 y 593. A 5
-                minutos del centro.
+                Fácil acceso desde el centro y zona sur de la ciudad.
               </p>
 
               <div className="mt-6 flex items-center gap-2">
@@ -120,7 +127,7 @@ export function Contacto() {
                 <li className="flex justify-between">
                   <span>Lunes a Viernes</span>
                   <span className="font-medium text-foreground">
-                    8:00 – 18:00
+                    9:00 – 18:00
                   </span>
                 </li>
                 <li className="flex justify-between">
@@ -139,8 +146,8 @@ export function Contacto() {
             {/* Mapa */}
             <div className="min-h-[280px] bg-muted">
               <iframe
-                title="Mapa de AutoSync en Mar del Plata"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=-57.5650%2C-38.0120%2C-57.5450%2C-37.9920&layer=mapnik&marker=-38.0020%2C-57.5550"
+                title="Mapa de AutoSync - Falucho 4657, Mar del Plata"
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${BBOX}&layer=mapnik&marker=${LAT}%2C${LON}`}
                 className="h-full min-h-[280px] w-full border-0"
                 loading="lazy"
               />

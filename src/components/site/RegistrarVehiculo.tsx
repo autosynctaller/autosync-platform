@@ -345,9 +345,8 @@ export function RegistrarVehiculo() {
         )}
 
         <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">
-          Los precios de los servicios se confirman al momento del presupuesto,
-          teniendo en cuenta el modelo y estado del vehículo. Te avisamos antes
-          de comenzar cualquier trabajo.
+          Una vez registrado tu vehículo, coordinamos el turno y te asesoramos
+          sobre lo que necesita. Trabajos con garantía escrita.
         </p>
       </div>
     </section>

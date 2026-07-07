@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ADMIN_PIN = process.env.ADMIN_PIN || '1234'
+const ADMIN_PIN = process.env.ADMIN_PIN || '1989'
 
 // POST: verificar PIN de admin -> devuelve un token simple (mismo PIN para esta demo)
 export async function POST(req: NextRequest) {

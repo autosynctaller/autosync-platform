@@ -458,7 +458,7 @@ export function AdminPanel({
                       <Button
                         size="sm"
                         onClick={() => {
-                          // pre-cargar precio si selecciona servicio
+                          // El precio lo carga el admin manualmente (control interno)
                           setNuevoTrabajo({
                             servicioId: '',
                             titulo: '',
@@ -521,9 +521,14 @@ export function AdminPanel({
                                 {t.proximo && ` · Próximo: ${t.proximo}`}
                               </p>
                             </div>
-                            <span className="text-sm font-bold">
-                              {formatPrecio(t.precio)}
-                            </span>
+                            <div className="text-right">
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                Precio
+                              </p>
+                              <span className="text-sm font-bold">
+                                {formatPrecio(t.precio)}
+                              </span>
+                            </div>
                           </div>
                         </li>
                       ))}

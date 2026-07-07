@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/hooks/use-toast'
-import { formatPrecio, formatFecha, normalizarPatente } from '@/lib/format'
+import { formatFecha, normalizarPatente } from '@/lib/format'
 import {
   Search,
   Car,
@@ -113,7 +113,7 @@ export function ConsultarHistorial() {
           </h2>
           <p className="mt-4 text-muted-foreground">
             Ingresá la patente de tu auto y mirá todos los trabajos que le
-            fuimos realizando, con fecha, descripción y precio.
+            fuimos realizando, con fecha y descripción detallada de cada uno.
           </p>
         </div>
 
@@ -325,14 +325,6 @@ export function ConsultarHistorial() {
                               </span>
                             )}
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            Precio
-                          </p>
-                          <p className="text-lg font-bold">
-                            {formatPrecio(t.precio)}
-                          </p>
                         </div>
                       </div>
                     </li>

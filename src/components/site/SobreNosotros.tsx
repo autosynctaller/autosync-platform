@@ -85,7 +85,7 @@ export function SobreNosotros() {
                 <InfoRow
                   icon={Wrench}
                   label="Horario de atención"
-                  value="Lunes a Viernes de 8:00 a 18:00 · Sábados de 9:00 a 13:00"
+                  value="Lunes a Viernes de 9:00 a 18:00 · Sábados de 9:00 a 13:00"
                 />
                 <InfoRow
                   icon={Award}

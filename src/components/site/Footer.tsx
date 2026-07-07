@@ -31,8 +31,7 @@ export function Footer() {
             </div>
             <p className="mt-4 max-w-md text-sm text-zinc-400">
               Taller mecánico con más de 20 años de trayectoria en la ciudad
-              feliz. Servicio automotor integral con garantía escrita y precios
-              honestos.
+              feliz. Servicio automotor integral con garantía escrita.
             </p>
           </div>
 
@@ -57,7 +56,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-2">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>L-V 8-18 · Sáb 9-13</span>
+                <span>L-V 9-18 · Sáb 9-13</span>
               </li>
             </ul>
           </div>

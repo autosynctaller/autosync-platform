@@ -118,17 +118,6 @@ export function ServiciosSection() {
                     <p className="text-sm text-muted-foreground">
                       {s.descripcion}
                     </p>
-                    <div className="mt-auto flex items-end justify-between pt-4">
-                      <p className="text-xs text-muted-foreground">
-                        Consultá disponibilidad y valor
-                      </p>
-                      <button
-                        onClick={() => scrollTo('#contacto')}
-                        className="text-xs font-semibold text-primary hover:underline"
-                      >
-                        Reservar →
-                      </button>
-                    </div>
                   </CardContent>
                 </Card>
               )

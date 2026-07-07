@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-const ADMIN_PIN = process.env.ADMIN_PIN || '1234'
+const ADMIN_PIN = process.env.ADMIN_PIN || '1989'
 
 function verificarPin(req: NextRequest): boolean {
   const auth = req.headers.get('x-admin-pin')
