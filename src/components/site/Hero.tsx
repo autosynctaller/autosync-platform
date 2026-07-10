@@ -62,8 +62,16 @@ export function Hero() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => scrollTo('#servicios')}
+                onClick={() => scrollTo('#historial')}
                 className="border-zinc-600 bg-transparent text-zinc-100 hover:bg-zinc-800 hover:text-white"
+              >
+                Ver mi historial
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={() => scrollTo('#servicios')}
+                className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
               >
                 Ver servicios
               </Button>
