@@ -45,10 +45,9 @@ export function Hero() {
             </h1>
 
             <p className="max-w-xl text-lg text-zinc-300">
-              Servicio automotor integral con más de 20 años de experiencia.
-              Hacé tu service, diagnosticamos cualquier falla y llevamos un
-              historial digital completo de cada trabajo que realizamos en tu
-              vehículo.
+              Servicio automotor integral con atención personalizada. Hacé tu
+              service, diagnosticamos cualquier falla y llevamos un historial
+              digital completo de cada trabajo que realizamos en tu vehículo.
             </p>
 
             <div className="flex flex-wrap gap-3">
@@ -108,9 +107,9 @@ export function Hero() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <StatCard label="Años de experiencia" value="20+" />
-                <StatCard label="Vehículos atendidos" value="8.500+" />
-                <StatCard label="Servicios activos" value="11" />
+                <StatCard label="Garantía escrita" value="100%" />
+                <StatCard label="Trabajos garantizados" value="11" />
+                <StatCard label="Atención" value="Personalizada" />
                 <StatCard label="Rating promedio" value="4.9 ★" />
               </div>
 

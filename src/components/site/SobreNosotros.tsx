@@ -21,21 +21,20 @@ export function SobreNosotros() {
             </h2>
             <div className="mt-6 space-y-4 text-base text-muted-foreground">
               <p>
-                Somos un taller mecánico ubicado en el corazón de Mar del Plata
-                con más de dos décadas de trayectoria atendiendo vehículos de
-                toda la región. Nuestra filosofía es simple: hacer las cosas
-                bien, con repuestos de calidad y precios honestos. Tratamos a
-                cada cliente como nos gustaría que nos traten a nosotros, y por
-                eso miles de marplatenses nos siguen eligiendo generación tras
-                generación.
+                Somos un taller mecánico ubicado en Mar del Plata, atendiendo
+                vehículos de toda la región. Nuestra filosofía es simple:
+                hacer las cosas bien, con repuestos de calidad y precios
+                honestos. Tratamos a cada cliente como nos gustaría que nos
+                traten a nosotros, y por eso los marplatenses nos siguen
+                eligiendo.
               </p>
               <p>
                 Trabajamos con todas las marcas y modelos, tanto nacionales como
                 importados, y nos actualizamos constantemente en las nuevas
                 tecnologías del automotor. Tenemos equipos de diagnóstico de
-                última generación y un equipo de técnicos capacitados para
-                resolver desde un simple cambio de aceite hasta las reparaciones
-                más complejas.
+                última generación y un equipo reducido pero dedicado, donde cada
+                integrante se ocupa personalmente de cada vehículo como si fuera
+                propio.
               </p>
               <p>
                 Recientemente incorporamos un sistema digital de historial de
@@ -55,13 +54,13 @@ export function SobreNosotros() {
               />
               <Pillar
                 icon={Award}
-                title="Técnicos certificados"
-                text="Personal constantemente capacitado en nuevas tecnologías."
+                title="Atención personalizada"
+                text="Te explicamos qué le pasa a tu auto, en lenguaje claro."
               />
               <Pillar
                 icon={Users}
-                title="Atención cercana"
-                text="Te explicamos qué le pasa a tu auto, en lenguaje claro."
+                title="Trato directo"
+                text="Hablás directo con quien repara tu vehículo, sin intermediarios."
               />
             </div>
           </div>
@@ -91,11 +90,6 @@ export function SobreNosotros() {
                   icon={Award}
                   label="Especialidades"
                   value="Inyección electrónica · Frenos ABS · Suspensión · Service oficial"
-                />
-                <InfoRow
-                  icon={Users}
-                  label="Equipo"
-                  value="5 mecánicos especializados y 2 asesores técnicos"
                 />
               </div>
             </CardContent>

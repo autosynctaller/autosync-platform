@@ -47,6 +47,7 @@ import {
   MessageCircle,
   FileText,
   Download,
+  Check,
 } from 'lucide-react'
 
 interface ServicioOption {
@@ -63,6 +64,8 @@ interface VehiculoListItem {
   anio: number
   patente: string
   tipo: string
+  notas: string | null
+  notasActualizadasEn: string | null
   cliente: { nombre: string; telefono: string }
   _count: { trabajos: number }
 }
@@ -111,6 +114,7 @@ interface VehiculoDetalle {
   combustible: string | null
   notas: string | null
   notasInternas: string | null
+  notasActualizadasEn: string | null
   cliente: {
     nombre: string
     telefono: string
@@ -536,6 +540,34 @@ export function AdminPanel({
     }
   }
 
+  // Marcar notas del cliente como ya revisadas (quitar el aviso)
+  const marcarNotasRevisadas = async () => {
+    if (!vehiculoDetalle || !authToken) return
+    try {
+      const res = await fetch(`/api/vehiculos/${vehiculoDetalle.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pin': authToken,
+        },
+        body: JSON.stringify({ marcarNotasRevisadas: true }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error al actualizar')
+      }
+      toast({ title: 'Notas marcadas como revisadas' })
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+    } catch (err: unknown) {
+      toast({
+        title: 'Error',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   // Iniciar edición de un trabajo
   const iniciarEditarTrabajo = (t: TrabajoDetalle) => {
     setTrabajoEditando(t)
@@ -835,35 +867,70 @@ export function AdminPanel({
               </Card>
             ) : (
               <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
-                {vehiculosFiltrados.map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => verDetalle(v)}
-                    className="flex w-full items-center gap-3 rounded-lg border border-border/60 bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Car className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold">
-                          {v.marca} {v.modelo}
-                        </span>
-                        <Badge variant="outline" className="font-mono">
-                          {v.patente}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {v.anio}
-                        </span>
+                {vehiculosFiltrados.map((v) => {
+                  const tieneNotaNueva = !!v.notasActualizadasEn
+                  const fechaNota = tieneNotaNueva
+                    ? new Date(v.notasActualizadasEn as string)
+                    : null
+                  const diasNota = fechaNota
+                    ? Math.floor(
+                        (Date.now() - fechaNota.getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      )
+                    : 0
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => verDetalle(v)}
+                      className={`flex w-full items-center gap-3 rounded-lg border-2 p-3 text-left transition-colors hover:border-primary/40 ${
+                        tieneNotaNueva
+                          ? 'border-amber-400 bg-amber-50 hover:bg-amber-100'
+                          : 'border-border/60 bg-card hover:bg-muted/40'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                          tieneNotaNueva
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-primary/10 text-primary'
+                        }`}
+                      >
+                        <Car className="h-5 w-5" />
                       </div>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {v.cliente.nombre} · {v.cliente.telefono} ·{' '}
-                        {v._count.trabajos} trabajo(s)
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </button>
-                ))}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold">
+                            {v.marca} {v.modelo}
+                          </span>
+                          <Badge variant="outline" className="font-mono">
+                            {v.patente}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {v.anio}
+                          </span>
+                          {tieneNotaNueva && (
+                            <Badge className="bg-amber-500 text-white hover:bg-amber-600">
+                              <Bell className="mr-1 h-3 w-3" />
+                              {diasNota === 0
+                                ? 'Nota nueva hoy'
+                                : `Nota nueva hace ${diasNota}d`}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {v.cliente.nombre} · {v.cliente.telefono} ·{' '}
+                          {v._count.trabajos} trabajo(s)
+                        </p>
+                        {tieneNotaNueva && v.notas && (
+                          <p className="mt-1 truncate text-xs italic text-amber-800">
+                            💬 "{v.notas}"
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -950,6 +1017,42 @@ export function AdminPanel({
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Aviso de nota nueva del cliente */}
+                {vehiculoDetalle.notasActualizadasEn && (
+                  <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-800">
+                          <Bell className="h-4 w-4" />
+                          El cliente actualizó sus notas
+                        </h4>
+                        {vehiculoDetalle.notas ? (
+                          <p className="text-sm italic text-amber-900">
+                            💬 "{vehiculoDetalle.notas}"
+                          </p>
+                        ) : (
+                          <p className="text-sm text-amber-800">
+                            El cliente borró sus notas.
+                          </p>
+                        )}
+                        <p className="mt-2 text-[10px] uppercase tracking-wider text-amber-700">
+                          Actualizado:{' '}
+                          {formatFecha(vehiculoDetalle.notasActualizadasEn)}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={marcarNotasRevisadas}
+                        className="border-amber-400 bg-white text-amber-800 hover:bg-amber-100"
+                      >
+                        <Check className="mr-2 h-4 w-4" />
+                        Marcar como revisada
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Notas internas del vehículo (solo taller) */}
                 {vehiculoDetalle.notasInternas && (

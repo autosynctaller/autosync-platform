@@ -86,7 +86,11 @@ export async function PATCH(
           ? Number(body.kilometraje)
           : null
       }
-      if (body.notas !== undefined) datosCliente.notas = body.notas || null
+      if (body.notas !== undefined) {
+        datosCliente.notas = body.notas || null
+        // Marcar que el cliente actualizó sus notas (para avisar al taller)
+        datosCliente.notasActualizadasEn = new Date()
+      }
 
       if (Object.keys(datosCliente).length === 0) {
         return NextResponse.json(
@@ -123,6 +127,11 @@ export async function PATCH(
           datosAdmin[campo] = body[campo] || null
         }
       }
+    }
+
+    // Admin puede marcar las notas del cliente como ya revisadas
+    if (body.marcarNotasRevisadas === true) {
+      datosAdmin.notasActualizadasEn = null
     }
 
     // Datos del cliente (titular)

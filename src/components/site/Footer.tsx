@@ -30,8 +30,8 @@ export function Footer() {
               </div>
             </div>
             <p className="mt-4 max-w-md text-sm text-zinc-400">
-              Taller mecánico con más de 20 años de trayectoria en la ciudad
-              feliz. Servicio automotor integral con garantía escrita.
+              Taller mecánico en Mar del Plata. Servicio automotor integral
+              con garantía escrita y atención personalizada.
             </p>
           </div>
 

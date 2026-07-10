@@ -21,23 +21,24 @@ model Cliente {
 }
 
 model Vehiculo {
-  id             String            @id @default(cuid())
-  marca          String
-  modelo         String
-  anio           Int
-  patente        String            @unique
-  color          String?
-  kilometraje    Int?
-  tipo           String            // Auto, Camioneta, Moto, Utilitario
-  combustible    String?           // Nafta, Diesel, GNC, Eléctrico, Híbrido
-  notas          String?           // Notas visibles para el cliente
-  notasInternas  String?           // Notas SOLO para el taller (no visibles para el cliente)
-  clienteId      String
-  cliente        Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  trabajos       Trabajo[]
-  fotos          FotoVehiculo[]
-  documentos     DocumentoVehiculo[]
-  createdAt      DateTime          @default(now())
+  id                     String            @id @default(cuid())
+  marca                  String
+  modelo                 String
+  anio                   Int
+  patente                String            @unique
+  color                  String?
+  kilometraje            Int?
+  tipo                   String            // Auto, Camioneta, Moto, Utilitario
+  combustible            String?           // Nafta, Diesel, GNC, Eléctrico, Híbrido
+  notas                  String?           // Notas visibles para el cliente
+  notasInternas          String?           // Notas SOLO para el taller (no visibles para el cliente)
+  notasActualizadasEn    DateTime?         // Última vez que el cliente actualizó sus notas (para avisar al taller)
+  clienteId              String
+  cliente                Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  trabajos               Trabajo[]
+  fotos                  FotoVehiculo[]
+  documentos             DocumentoVehiculo[]
+  createdAt              DateTime          @default(now())
 }
 
 model Trabajo {
