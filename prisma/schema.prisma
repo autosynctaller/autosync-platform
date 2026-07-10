@@ -33,6 +33,8 @@ model Vehiculo {
   notas                  String?           // Notas visibles para el cliente
   notasInternas          String?           // Notas SOLO para el taller (no visibles para el cliente)
   notasActualizadasEn    DateTime?         // Última vez que el cliente actualizó sus notas (para avisar al taller)
+  vtvVencimiento         DateTime?         // Fecha de vencimiento de la VTV
+  gncVencimiento         DateTime?         // Fecha de vencimiento de la obleta GNC (solo si es GNC)
   clienteId              String
   cliente                Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   trabajos               Trabajo[]

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
-import { Car, User, CheckCircle2, Loader2 } from 'lucide-react'
+import { Car, User, CheckCircle2, Loader2, Calendar } from 'lucide-react'
 
 const TIPOS = ['Auto', 'Camioneta', 'Moto', 'Utilitario', 'Otro']
 const COMBUSTIBLES = ['Nafta', 'Diesel', 'GNC', 'Eléctrico', 'Híbrido']
@@ -40,6 +40,8 @@ export function RegistrarVehiculo() {
     tipo: 'Auto',
     combustible: 'Nafta',
     notas: '',
+    vtvVencimiento: '',
+    gncVencimiento: '',
   })
 
   const update = (k: string, v: string) =>
@@ -98,6 +100,8 @@ export function RegistrarVehiculo() {
         tipo: 'Auto',
         combustible: 'Nafta',
         notas: '',
+        vtvVencimiento: '',
+        gncVencimiento: '',
       })
     } catch (err: unknown) {
       toast({
@@ -317,6 +321,36 @@ export function RegistrarVehiculo() {
                       rows={3}
                     />
                   </Field>
+                </fieldset>
+
+                {/* Vencimientos */}
+                <fieldset className="space-y-4">
+                  <legend className="flex items-center gap-2 text-sm font-semibold">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    Vencimientos (opcional)
+                  </legend>
+                  <p className="text-xs text-muted-foreground">
+                    Si cargás las fechas de vencimiento, te enviaremos un
+                    recordatorio cuando se acerquen para que no se te pasen.
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Vencimiento VTV">
+                      <Input
+                        type="date"
+                        value={form.vtvVencimiento}
+                        onChange={(e) => update('vtvVencimiento', e.target.value)}
+                      />
+                    </Field>
+                    {form.combustible === 'GNC' && (
+                      <Field label="Vencimiento obleta GNC">
+                        <Input
+                          type="date"
+                          value={form.gncVencimiento}
+                          onChange={(e) => update('gncVencimiento', e.target.value)}
+                        />
+                      </Field>
+                    )}
+                  </div>
                 </fieldset>
 
                 <div className="flex flex-col items-center gap-3 border-t border-border/60 pt-6 sm:flex-row sm:justify-between">

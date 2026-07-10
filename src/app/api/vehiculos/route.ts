@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
       tipo,
       combustible,
       notas,
+      vtvVencimiento,
+      gncVencimiento,
     } = body
 
     // Validaciones mínimas
@@ -144,6 +146,8 @@ export async function POST(req: NextRequest) {
         tipo: tipo || 'Auto',
         combustible: combustible || null,
         notas: notas || null,
+        vtvVencimiento: vtvVencimiento ? new Date(vtvVencimiento) : null,
+        gncVencimiento: gncVencimiento ? new Date(gncVencimiento) : null,
         clienteId: cliente.id,
       },
       include: { cliente: true },

@@ -70,6 +70,8 @@ interface Vehiculo {
   tipo: string
   combustible: string | null
   notas: string | null
+  vtvVencimiento: string | null
+  gncVencimiento: string | null
   cliente: {
     nombre: string
     telefono: string
@@ -385,6 +387,24 @@ export function ConsultarHistorial() {
                   </div>
                 </div>
 
+                {/* Vencimientos VTV y GNC */}
+                {(vehiculo.vtvVencimiento || vehiculo.gncVencimiento) && (
+                  <div className="mb-5 grid gap-3 sm:grid-cols-2">
+                    {vehiculo.vtvVencimiento && (
+                      <VencimientoCard
+                        titulo="VTV"
+                        fecha={vehiculo.vtvVencimiento}
+                      />
+                    )}
+                    {vehiculo.gncVencimiento && (
+                      <VencimientoCard
+                        titulo="Obleta GNC"
+                        fecha={vehiculo.gncVencimiento}
+                      />
+                    )}
+                  </div>
+                )}
+
                 {vehiculo.notas && (
                   <div className="mb-5 rounded-lg border-l-4 border-primary bg-primary/5 p-3">
                     <p className="text-xs font-semibold text-muted-foreground">
@@ -631,6 +651,70 @@ export function ConsultarHistorial() {
         </DialogContent>
       </Dialog>
     </section>
+  )
+}
+
+function VencimientoCard({
+  titulo,
+  fecha,
+}: {
+  titulo: string
+  fecha: string
+}) {
+  const fechaObj = new Date(fecha)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const diasRestantes = Math.ceil(
+    (fechaObj.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
+  )
+
+  let estado: 'vencido' | 'hoy' | 'proximo' | 'aldia'
+  let color: string
+  let icono: string
+
+  if (diasRestantes < 0) {
+    estado = 'vencido'
+    color = 'border-red-300 bg-red-50 text-red-800'
+    icono = '⚠️'
+  } else if (diasRestantes === 0) {
+    estado = 'hoy'
+    color = 'border-amber-300 bg-amber-50 text-amber-800'
+    icono = '⏰'
+  } else if (diasRestantes <= 30) {
+    estado = 'proximo'
+    color = 'border-amber-300 bg-amber-50 text-amber-800'
+    icono = '⏰'
+  } else {
+    estado = 'aldia'
+    color = 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    icono = '✓'
+  }
+
+  const textoEstado =
+    estado === 'vencido'
+      ? `Vencida hace ${Math.abs(diasRestantes)} día(s)`
+      : estado === 'hoy'
+        ? 'Vence hoy'
+        : estado === 'proximo'
+          ? `Vence en ${diasRestantes} día(s)`
+          : 'Al día'
+
+  return (
+    <div className={`rounded-lg border-2 p-3 ${color}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
+            {titulo}
+          </p>
+          <p className="text-sm font-bold">
+            {icono} {formatFecha(fecha)}
+          </p>
+        </div>
+        <span className="text-xs font-semibold">
+          {textoEstado}
+        </span>
+      </div>
+    </div>
   )
 }
 

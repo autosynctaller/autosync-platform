@@ -66,6 +66,9 @@ interface VehiculoListItem {
   tipo: string
   notas: string | null
   notasActualizadasEn: string | null
+  vtvVencimiento: string | null
+  gncVencimiento: string | null
+  combustible: string | null
   cliente: { nombre: string; telefono: string }
   _count: { trabajos: number }
 }
@@ -115,6 +118,8 @@ interface VehiculoDetalle {
   notas: string | null
   notasInternas: string | null
   notasActualizadasEn: string | null
+  vtvVencimiento: string | null
+  gncVencimiento: string | null
   cliente: {
     nombre: string
     telefono: string
@@ -182,6 +187,7 @@ export function AdminPanel({
   // recordatorios
   const [recordatorios, setRecordatorios] = useState<Array<{
     id: string
+    tipo: 'trabajo' | 'vtv' | 'gnc'
     tituloTrabajo: string
     proximoTexto: string | null
     fechaTrabajo: string
@@ -215,6 +221,8 @@ export function AdminPanel({
     combustible: 'Nafta',
     notas: '',
     notasInternas: '',
+    vtvVencimiento: '',
+    gncVencimiento: '',
     cliente_nombre: '',
     cliente_telefono: '',
     cliente_email: '',
@@ -682,6 +690,12 @@ export function AdminPanel({
       combustible: vehiculoDetalle.combustible || 'Nafta',
       notas: vehiculoDetalle.notas || '',
       notasInternas: vehiculoDetalle.notasInternas || '',
+      vtvVencimiento: vehiculoDetalle.vtvVencimiento
+        ? vehiculoDetalle.vtvVencimiento.split('T')[0]
+        : '',
+      gncVencimiento: vehiculoDetalle.gncVencimiento
+        ? vehiculoDetalle.gncVencimiento.split('T')[0]
+        : '',
       cliente_nombre: vehiculoDetalle.cliente.nombre,
       cliente_telefono: vehiculoDetalle.cliente.telefono,
       cliente_email: vehiculoDetalle.cliente.email || '',
@@ -722,6 +736,8 @@ export function AdminPanel({
           combustible: editVehiculo.combustible || null,
           notas: editVehiculo.notas || null,
           notasInternas: editVehiculo.notasInternas || null,
+          vtvVencimiento: editVehiculo.vtvVencimiento || null,
+          gncVencimiento: editVehiculo.gncVencimiento || null,
           cliente_nombre: editVehiculo.cliente_nombre,
           cliente_telefono: editVehiculo.cliente_telefono,
           cliente_email: editVehiculo.cliente_email,
@@ -1051,6 +1067,24 @@ export function AdminPanel({
                         Marcar como revisada
                       </Button>
                     </div>
+                  </div>
+                )}
+
+                {/* Vencimientos VTV y GNC */}
+                {(vehiculoDetalle.vtvVencimiento || vehiculoDetalle.gncVencimiento) && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {vehiculoDetalle.vtvVencimiento && (
+                      <AdminVencimientoCard
+                        titulo="VTV"
+                        fecha={vehiculoDetalle.vtvVencimiento}
+                      />
+                    )}
+                    {vehiculoDetalle.gncVencimiento && (
+                      <AdminVencimientoCard
+                        titulo="Obleta GNC"
+                        fecha={vehiculoDetalle.gncVencimiento}
+                      />
+                    )}
                   </div>
                 )}
 
@@ -2072,6 +2106,39 @@ export function AdminPanel({
                   placeholder="Notas que el cliente verá en su historial"
                 />
               </div>
+
+              {/* Vencimientos */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Vencimiento VTV</Label>
+                  <Input
+                    type="date"
+                    value={editVehiculo.vtvVencimiento}
+                    onChange={(e) =>
+                      setEditVehiculo((ev) => ({
+                        ...ev,
+                        vtvVencimiento: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                {editVehiculo.combustible === 'GNC' && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Vencimiento obleta GNC</Label>
+                    <Input
+                      type="date"
+                      value={editVehiculo.gncVencimiento}
+                      onChange={(e) =>
+                        setEditVehiculo((ev) => ({
+                          ...ev,
+                          gncVencimiento: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-1.5 rounded-lg border border-amber-300 bg-amber-50 p-2">
                 <Label className="flex items-center gap-1.5 text-xs text-amber-700">
                   <Lock className="h-3 w-3" /> Notas internas (solo taller)
@@ -2160,7 +2227,11 @@ export function AdminPanel({
                   const telefonoLimpio = r.cliente.telefono
                     .replace(/[^0-9]/g, '')
                     .replace(/^0/, '549')
-                  const mensaje = `Hola ${r.cliente.nombre}! Te recordamos que tu ${r.vehiculo.marca} ${r.vehiculo.modelo} (patente ${r.vehiculo.patente}) tiene pendiente: ${r.tituloTrabajo}. ${r.proximoTexto ? `Próximo: ${r.proximoTexto}.` : ''} AutoSync - Taller Mecánico.`
+                  const mensaje = r.tipo === 'vtv'
+                    ? `Hola ${r.cliente.nombre}! Te recordamos que la VTV de tu ${r.vehiculo.marca} ${r.vehiculo.modelo} (patente ${r.vehiculo.patente}) vence el ${formatFecha(r.fechaRecordatorio)}. Recordá realizar la Verificación Técnica Vehicular. AutoSync - Taller Mecánico.`
+                    : r.tipo === 'gnc'
+                      ? `Hola ${r.cliente.nombre}! Te recordamos que la obleta GNC de tu ${r.vehiculo.marca} ${r.vehiculo.modelo} (patente ${r.vehiculo.patente}) vence el ${formatFecha(r.fechaRecordatorio)}. Recordá renovar la obleta de GNC. AutoSync - Taller Mecánico.`
+                      : `Hola ${r.cliente.nombre}! Te recordamos que tu ${r.vehiculo.marca} ${r.vehiculo.modelo} (patente ${r.vehiculo.patente}) tiene pendiente: ${r.tituloTrabajo}. ${r.proximoTexto ? `Próximo: ${r.proximoTexto}.` : ''} AutoSync - Taller Mecánico.`
                   const urlWa = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`
 
                   return (
@@ -2182,6 +2253,20 @@ export function AdminPanel({
                             <span className="font-semibold">
                               {r.tituloTrabajo}
                             </span>
+                            <Badge
+                              variant={
+                                r.tipo === 'trabajo'
+                                  ? 'secondary'
+                                  : 'outline'
+                              }
+                              className="text-[10px]"
+                            >
+                              {r.tipo === 'vtv'
+                                ? 'VTV'
+                                : r.tipo === 'gnc'
+                                  ? 'GNC'
+                                  : 'Trabajo'}
+                            </Badge>
                             <Badge
                               variant={
                                 r.estado === 'vencido'
@@ -2270,5 +2355,50 @@ export function AdminPanel({
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function AdminVencimientoCard({
+  titulo,
+  fecha,
+}: {
+  titulo: string
+  fecha: string
+}) {
+  const fechaObj = new Date(fecha)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const diasRestantes = Math.ceil(
+    (fechaObj.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24),
+  )
+
+  let color: string
+  let texto: string
+
+  if (diasRestantes < 0) {
+    color = 'border-red-400 bg-red-50 text-red-800'
+    texto = `Vencida hace ${Math.abs(diasRestantes)} día(s) ⚠️`
+  } else if (diasRestantes === 0) {
+    color = 'border-amber-400 bg-amber-50 text-amber-800'
+    texto = 'Vence hoy ⏰'
+  } else if (diasRestantes <= 30) {
+    color = 'border-amber-400 bg-amber-50 text-amber-800'
+    texto = `Vence en ${diasRestantes} día(s) ⏰`
+  } else if (diasRestantes <= 60) {
+    color = 'border-yellow-300 bg-yellow-50 text-yellow-800'
+    texto = `Vence en ${diasRestantes} día(s)`
+  } else {
+    color = 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    texto = 'Al día ✓'
+  }
+
+  return (
+    <div className={`rounded-lg border-2 p-3 ${color}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
+        {titulo}
+      </p>
+      <p className="text-sm font-bold">{formatFecha(fecha)}</p>
+      <p className="mt-1 text-xs font-medium">{texto}</p>
+    </div>
   )
 }

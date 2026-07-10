@@ -91,6 +91,16 @@ export async function PATCH(
         // Marcar que el cliente actualizó sus notas (para avisar al taller)
         datosCliente.notasActualizadasEn = new Date()
       }
+      if (body.vtvVencimiento !== undefined) {
+        datosCliente.vtvVencimiento = body.vtvVencimiento
+          ? new Date(body.vtvVencimiento)
+          : null
+      }
+      if (body.gncVencimiento !== undefined) {
+        datosCliente.gncVencimiento = body.gncVencimiento
+          ? new Date(body.gncVencimiento)
+          : null
+      }
 
       if (Object.keys(datosCliente).length === 0) {
         return NextResponse.json(
@@ -118,11 +128,15 @@ export async function PATCH(
       'combustible',
       'notas',
       'notasInternas',
+      'vtvVencimiento',
+      'gncVencimiento',
     ]
     for (const campo of camposPermitidos) {
       if (body[campo] !== undefined) {
         if (campo === 'anio' || campo === 'kilometraje') {
           datosAdmin[campo] = body[campo] ? Number(body[campo]) : null
+        } else if (campo === 'vtvVencimiento' || campo === 'gncVencimiento') {
+          datosAdmin[campo] = body[campo] ? new Date(body[campo]) : null
         } else {
           datosAdmin[campo] = body[campo] || null
         }
