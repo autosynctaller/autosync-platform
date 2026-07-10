@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
             include: { servicio: true },
           },
           fotos: {
+            where: { esPrivada: false },
             orderBy: { createdAt: 'desc' },
           },
         },

@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       proximo,
       fecha,
       kilometraje,
+      recordatorio,
     } = body
 
     if (!vehiculoId || !titulo || !descripcion || precio == null) {
@@ -57,6 +58,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Fecha de recordatorio (opcional)
+    let recordatorioDate: Date | null = null
+    if (recordatorio) {
+      const parsed = new Date(recordatorio)
+      if (!isNaN(parsed.getTime())) {
+        recordatorioDate = parsed
+      }
+    }
+
     const trabajo = await db.trabajo.create({
       data: {
         vehiculoId,
@@ -68,6 +78,7 @@ export async function POST(req: NextRequest) {
         proximo: proximo || null,
         fecha: fechaTrabajo,
         kilometraje: kilometraje ? Number(kilometraje) : null,
+        recordatorio: recordatorioDate,
       },
       include: { servicio: true },
     })

@@ -48,6 +48,7 @@ export async function POST(
     const formData = await req.formData()
     const file = formData.get('foto') as File | null
     const descripcion = (formData.get('descripcion') as string | null) || ''
+    const esPrivada = formData.get('esPrivada') === 'true'
 
     if (!file) {
       return NextResponse.json(
@@ -87,6 +88,7 @@ export async function POST(
         vehiculoId: id,
         url,
         descripcion: descripcion || null,
+        esPrivada,
       },
     })
 

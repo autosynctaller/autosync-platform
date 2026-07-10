@@ -44,6 +44,16 @@ export async function PATCH(
         datos.fecha = parsed
       }
     }
+    if (body.recordatorio !== undefined) {
+      if (body.recordatorio) {
+        const parsed = new Date(body.recordatorio)
+        if (!isNaN(parsed.getTime())) {
+          datos.recordatorio = parsed
+        }
+      } else {
+        datos.recordatorio = null
+      }
+    }
 
     if (Object.keys(datos).length === 0) {
       return NextResponse.json(

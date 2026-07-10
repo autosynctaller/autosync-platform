@@ -39,20 +39,21 @@ model Vehiculo {
 }
 
 model Trabajo {
-  id           String    @id @default(cuid())
-  vehiculoId   String
-  vehiculo     Vehiculo  @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
-  servicioId   String?
-  servicio     Servicio? @relation(fields: [servicioId], references: [id])
-  titulo       String
-  descripcion  String
-  precio       Float
-  estado       String    // Pendiente, En proceso, Completado
-  fecha        DateTime  @default(now())
-  kilometraje  Int?      // KM del vehículo al momento del trabajo
-  proximo      String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id               String    @id @default(cuid())
+  vehiculoId       String
+  vehiculo         Vehiculo  @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  servicioId       String?
+  servicio         Servicio? @relation(fields: [servicioId], references: [id])
+  titulo           String
+  descripcion      String
+  precio           Float
+  estado           String    // Pendiente, En proceso, Completado
+  fecha            DateTime  @default(now())
+  kilometraje      Int?      // KM del vehículo al momento del trabajo
+  proximo          String?   // Texto libre: "A los 90.000 km" o "en 6 meses"
+  recordatorio     DateTime? // Fecha exacta en la que se debe enviar recordatorio
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Servicio {
@@ -74,5 +75,6 @@ model FotoVehiculo {
   vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
   url         String   // Ruta relativa /uploads/vehiculos/...
   descripcion String?
+  esPrivada   Boolean  @default(false) // Si es true, solo la ve el admin
   createdAt   DateTime @default(now())
 }

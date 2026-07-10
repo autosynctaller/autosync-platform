@@ -42,6 +42,9 @@ import {
   Calendar,
   X,
   Edit,
+  Clock,
+  Bell,
+  MessageCircle,
 } from 'lucide-react'
 
 interface ServicioOption {
@@ -71,6 +74,7 @@ interface TrabajoDetalle {
   fecha: string
   kilometraje: number | null
   proximo: string | null
+  recordatorio: string | null
   servicio: { nombre: string; categoria: string } | null
 }
 
@@ -78,6 +82,7 @@ interface FotoDetalle {
   id: string
   url: string
   descripcion: string | null
+  esPrivada: boolean
   createdAt: string
 }
 
@@ -113,7 +118,7 @@ export function AdminPanel({
 }) {
   const { toast } = useToast()
   const [paso, setPaso] = useState<
-    'login' | 'lista' | 'detalle' | 'cargar' | 'editar-trabajo' | 'editar-vehiculo'
+    'login' | 'lista' | 'detalle' | 'cargar' | 'editar-trabajo' | 'editar-vehiculo' | 'recordatorios'
   >('login')
   const [pin, setPin] = useState('')
   const [authToken, setAuthToken] = useState<string | null>(null)
@@ -140,13 +145,39 @@ export function AdminPanel({
     proximo: '',
     fecha: '', // YYYY-MM-DD
     kilometraje: '',
+    recordatorio: '', // YYYY-MM-DD (opcional)
   })
   const [guardando, setGuardando] = useState(false)
 
   // fotos
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [descripcionFoto, setDescripcionFoto] = useState('')
+  const [fotoPrivada, setFotoPrivada] = useState(false)
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null)
+
+  // recordatorios
+  const [recordatorios, setRecordatorios] = useState<Array<{
+    id: string
+    tituloTrabajo: string
+    proximoTexto: string | null
+    fechaTrabajo: string
+    fechaRecordatorio: string
+    diasRestantes: number
+    estado: 'vencido' | 'hoy' | 'proximo' | 'futuro'
+    vehiculo: {
+      id: string
+      marca: string
+      modelo: string
+      patente: string
+      kilometraje: number | null
+    }
+    cliente: {
+      nombre: string
+      telefono: string
+      email: string | null
+    }
+  }>>([])
+  const [cargandoRecordatorios, setCargandoRecordatorios] = useState(false)
 
   // edición
   const [trabajoEditando, setTrabajoEditando] = useState<TrabajoDetalle | null>(null)
@@ -235,6 +266,23 @@ export function AdminPanel({
     }
   }, [])
 
+  const cargarRecordatorios = useCallback(async (token: string) => {
+    setCargandoRecordatorios(true)
+    try {
+      const res = await fetch('/api/recordatorios', {
+        headers: { 'x-admin-pin': token },
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setRecordatorios(data.recordatorios || [])
+      }
+    } catch {
+      // silencioso
+    } finally {
+      setCargandoRecordatorios(false)
+    }
+  }, [])
+
   const verDetalle = async (v: VehiculoListItem) => {
     setDetalleLoading(true)
     setPaso('detalle')
@@ -284,6 +332,7 @@ export function AdminPanel({
           kilometraje: nuevoTrabajo.kilometraje
             ? Number(nuevoTrabajo.kilometraje)
             : null,
+          recordatorio: nuevoTrabajo.recordatorio || null,
         }),
       })
       const data = await res.json()
@@ -303,6 +352,7 @@ export function AdminPanel({
         proximo: '',
         fecha: hoy,
         kilometraje: '',
+        recordatorio: '',
       })
       // recargar detalle
       await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
@@ -335,6 +385,7 @@ export function AdminPanel({
       const formData = new FormData()
       formData.append('foto', file)
       formData.append('descripcion', descripcionFoto)
+      formData.append('esPrivada', String(fotoPrivada))
       const res = await fetch(`/api/vehiculos/${vehiculoDetalle.id}/fotos`, {
         method: 'POST',
         headers: { 'x-admin-pin': authToken },
@@ -344,6 +395,7 @@ export function AdminPanel({
       if (!res.ok) throw new Error(data.error || 'Error al subir foto')
       toast({ title: 'Foto agregada', description: 'La foto se guardó correctamente.' })
       setDescripcionFoto('')
+      setFotoPrivada(false)
       await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
     } catch (err: unknown) {
       toast({
@@ -398,6 +450,7 @@ export function AdminPanel({
       proximo: t.proximo || '',
       fecha: t.fecha.split('T')[0],
       kilometraje: t.kilometraje != null ? String(t.kilometraje) : '',
+      recordatorio: t.recordatorio ? t.recordatorio.split('T')[0] : '',
     })
     setPaso('editar-trabajo')
   }
@@ -432,6 +485,7 @@ export function AdminPanel({
           kilometraje: nuevoTrabajo.kilometraje
             ? Number(nuevoTrabajo.kilometraje)
             : null,
+          recordatorio: nuevoTrabajo.recordatorio || null,
         }),
       })
       const data = await res.json()
@@ -646,10 +700,23 @@ export function AdminPanel({
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline" size="sm" onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Salir
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void cargarRecordatorios(authToken)
+                    setPaso('recordatorios')
+                  }}
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  Recordatorios
+                </Button>
+                <Button variant="outline" size="sm" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Salir
+                </Button>
+              </div>
             </div>
 
             {listaLoading ? (
@@ -768,6 +835,7 @@ export function AdminPanel({
                               fecha: hoy,
                               kilometraje:
                                 vehiculoDetalle.kilometraje?.toString() || '',
+                              recordatorio: '',
                             })
                             setPaso('cargar')
                           }}
@@ -796,7 +864,7 @@ export function AdminPanel({
                         placeholder="Descripción (opcional)"
                         className="flex-1"
                       />
-                      <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
                         {subiendoFoto ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -822,6 +890,15 @@ export function AdminPanel({
                         />
                       </label>
                     </div>
+                    <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={fotoPrivada}
+                        onChange={(e) => setFotoPrivada(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-border"
+                      />
+                      Marcar como <strong className="text-foreground">foto privada</strong> (solo visible para el taller, no para el cliente)
+                    </label>
                     {vehiculoDetalle.fotos.length >= 8 && (
                       <p className="mt-2 text-xs text-amber-600">
                         Alcanzaste el máximo de 8 fotos. Eliminá alguna para subir otra.
@@ -842,7 +919,11 @@ export function AdminPanel({
                       {vehiculoDetalle.fotos.map((foto) => (
                         <div
                           key={foto.id}
-                          className="group relative aspect-square overflow-hidden rounded-md border border-border/60"
+                          className={`group relative aspect-square overflow-hidden rounded-md border-2 ${
+                            foto.esPrivada
+                              ? 'border-amber-400'
+                              : 'border-border/60'
+                          }`}
                         >
                           <img
                             src={foto.url}
@@ -850,6 +931,11 @@ export function AdminPanel({
                             className="h-full w-full cursor-pointer object-cover"
                             onClick={() => setFotoSeleccionada(foto.url)}
                           />
+                          {foto.esPrivada && (
+                            <div className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                              Privada
+                            </div>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -953,22 +1039,22 @@ export function AdminPanel({
                               <span className="text-sm font-bold">
                                 {formatPrecio(t.precio)}
                               </span>
-                              <div className="mt-1.5 flex justify-end gap-1">
+                              <div className="mt-2 flex flex-col gap-1">
                                 <button
                                   onClick={() => iniciarEditarTrabajo(t)}
-                                  className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-primary"
+                                  className="rounded-md border border-border/60 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
                                   aria-label="Editar trabajo"
-                                  title="Editar trabajo"
                                 >
-                                  <Edit className="h-3.5 w-3.5" />
+                                  <Edit className="mr-1 inline h-3 w-3" />
+                                  Editar
                                 </button>
                                 <button
                                   onClick={() => eliminarTrabajo(t.id)}
-                                  className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                  className="rounded-md border border-border/60 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/10"
                                   aria-label="Eliminar trabajo"
-                                  title="Eliminar trabajo"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="mr-1 inline h-3 w-3" />
+                                  Eliminar
                                 </button>
                               </div>
                             </div>
@@ -1151,6 +1237,41 @@ export function AdminPanel({
               </div>
             </div>
 
+            <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <Label htmlFor="t-rec" className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-primary" /> Recordatorio (opcional)
+              </Label>
+              <Input
+                id="t-rec"
+                type="date"
+                value={nuevoTrabajo.recordatorio}
+                onChange={(e) =>
+                  setNuevoTrabajo((nt) => ({
+                    ...nt,
+                    recordatorio: e.target.value,
+                  }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Elegí una fecha y el trabajo aparecerá en la sección "Recordatorios"
+                del panel cuando se acerque ese día. Ej: si hiciste cambio de aceite,
+                programá el recordatorio para dentro de 6 meses.
+              </p>
+              {nuevoTrabajo.recordatorio && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() =>
+                    setNuevoTrabajo((nt) => ({ ...nt, recordatorio: '' }))
+                  }
+                >
+                  Quitar recordatorio
+                </Button>
+              )}
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"
@@ -1311,6 +1432,40 @@ export function AdminPanel({
                   }
                 />
               </div>
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <Label htmlFor="et-rec" className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-primary" /> Recordatorio (opcional)
+              </Label>
+              <Input
+                id="et-rec"
+                type="date"
+                value={nuevoTrabajo.recordatorio}
+                onChange={(e) =>
+                  setNuevoTrabajo((nt) => ({
+                    ...nt,
+                    recordatorio: e.target.value,
+                  }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                Cuando se acerque esta fecha, el trabajo aparecerá en la sección
+                "Recordatorios" del panel.
+              </p>
+              {nuevoTrabajo.recordatorio && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() =>
+                    setNuevoTrabajo((nt) => ({ ...nt, recordatorio: '' }))
+                  }
+                >
+                  Quitar recordatorio
+                </Button>
+              )}
             </div>
 
             <DialogFooter>
@@ -1552,6 +1707,162 @@ export function AdminPanel({
               </Button>
             </DialogFooter>
           </form>
+        )}
+
+        {/* PASO 7: RECORDATORIOS */}
+        {paso === 'recordatorios' && authToken && (
+          <div className="space-y-4 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <Bell className="h-5 w-5 text-primary" />
+                  Recordatorios
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Trabajos con fecha de recordatorio configurada. Los que están
+                  vencidos o próximos aparecen arriba.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaso('lista')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver
+              </Button>
+            </div>
+
+            {cargandoRecordatorios ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : recordatorios.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="p-8 text-center">
+                  <Bell className="mx-auto mb-2 h-10 w-10 text-muted-foreground/50" />
+                  <p className="text-sm font-medium">
+                    No hay recordatorios configurados
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Cuando cargues un trabajo con fecha de recordatorio, va a
+                    aparecer acá para que le avises al cliente.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+                {recordatorios.map((r) => {
+                  const telefonoLimpio = r.cliente.telefono
+                    .replace(/[^0-9]/g, '')
+                    .replace(/^0/, '549')
+                  const mensaje = `Hola ${r.cliente.nombre}! Te recordamos que tu ${r.vehiculo.marca} ${r.vehiculo.modelo} (patente ${r.vehiculo.patente}) tiene pendiente: ${r.tituloTrabajo}. ${r.proximoTexto ? `Próximo: ${r.proximoTexto}.` : ''} AutoSync - Taller Mecánico.`
+                  const urlWa = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`
+
+                  return (
+                    <div
+                      key={r.id}
+                      className={`rounded-lg border-2 p-4 ${
+                        r.estado === 'vencido'
+                          ? 'border-red-300 bg-red-50'
+                          : r.estado === 'hoy'
+                            ? 'border-amber-300 bg-amber-50'
+                            : r.estado === 'proximo'
+                              ? 'border-yellow-200 bg-yellow-50'
+                              : 'border-border/60 bg-card'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold">
+                              {r.tituloTrabajo}
+                            </span>
+                            <Badge
+                              variant={
+                                r.estado === 'vencido'
+                                  ? 'destructive'
+                                  : 'secondary'
+                              }
+                              className="text-[10px]"
+                            >
+                              {r.estado === 'vencido'
+                                ? `Vencido ${Math.abs(r.diasRestantes)} día(s)`
+                                : r.estado === 'hoy'
+                                  ? 'Hoy'
+                                  : r.estado === 'proximo'
+                                    ? `En ${r.diasRestantes} día(s)`
+                                    : `En ${r.diasRestantes} día(s)`}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {r.vehiculo.marca} {r.vehiculo.modelo} ·{' '}
+                            <span className="font-mono">
+                              {r.vehiculo.patente}
+                            </span>
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Cliente: {r.cliente.nombre} · {r.cliente.telefono}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Trabajo realizado el {formatFecha(r.fechaTrabajo)} ·
+                            Recordatorio para el{' '}
+                            <strong>{formatFecha(r.fechaRecordatorio)}</strong>
+                          </p>
+                          {r.proximoTexto && (
+                            <p className="mt-1 text-xs text-primary">
+                              Nota: {r.proximoTexto}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button asChild size="sm">
+                          <a
+                            href={urlWa}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            Enviar por WhatsApp
+                          </a>
+                        </Button>
+                        {r.cliente.email && (
+                          <Button asChild variant="outline" size="sm">
+                            <a href={`mailto:${r.cliente.email}?subject=${encodeURIComponent('Recordatorio - AutoSync')}&body=${encodeURIComponent(mensaje)}`}>
+                              Enviar por Email
+                            </a>
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            // Ir al detalle del vehículo
+                            void verDetalle({
+                              id: r.vehiculo.id,
+                              marca: r.vehiculo.marca,
+                              modelo: r.vehiculo.modelo,
+                              anio: 0,
+                              patente: r.vehiculo.patente,
+                              tipo: '',
+                              cliente: {
+                                nombre: r.cliente.nombre,
+                                telefono: r.cliente.telefono,
+                              },
+                              _count: { trabajos: 0 },
+                            })
+                          }}
+                        >
+                          Ver vehículo →
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
       </DialogContent>
     </Dialog>
