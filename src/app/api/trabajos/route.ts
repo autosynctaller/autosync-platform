@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       fecha,
       kilometraje,
       recordatorio,
+      notasInternas,
     } = body
 
     if (!vehiculoId || !titulo || !descripcion || precio == null) {
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         fecha: fechaTrabajo,
         kilometraje: kilometraje ? Number(kilometraje) : null,
         recordatorio: recordatorioDate,
+        notasInternas: notasInternas || null,
       },
       include: { servicio: true },
     })

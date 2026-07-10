@@ -37,7 +37,9 @@ import {
   Clock,
   Edit,
   Save,
+  FileDown,
 } from 'lucide-react'
+import { generarPDFHistorial } from '@/lib/pdf-historial'
 
 interface Trabajo {
   id: string
@@ -392,8 +394,24 @@ export function ConsultarHistorial() {
                   </div>
                 )}
 
-                {/* Botón editar (cliente) */}
-                <div className="mb-5 flex justify-end">
+                {/* Botones de acción */}
+                <div className="mb-5 flex flex-wrap justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (vehiculo) {
+                        generarPDFHistorial(vehiculo)
+                        toast({
+                          title: 'PDF generado',
+                          description: 'Revisá las descargas de tu navegador.',
+                        })
+                      }
+                    }}
+                  >
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Exportar PDF
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

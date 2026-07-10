@@ -26,6 +26,9 @@ export async function GET(
         fotos: {
           orderBy: { createdAt: 'desc' },
         },
+        documentos: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
     })
 
@@ -110,6 +113,7 @@ export async function PATCH(
       'tipo',
       'combustible',
       'notas',
+      'notasInternas',
     ]
     for (const campo of camposPermitidos) {
       if (body[campo] !== undefined) {

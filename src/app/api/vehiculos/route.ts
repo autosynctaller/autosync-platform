@@ -50,7 +50,16 @@ export async function GET(req: NextRequest) {
           { status: 404 },
         )
       }
-      return NextResponse.json({ vehiculo })
+
+      // Excluir notas internas (solo para el taller) de la respuesta pública
+      const { notasInternas: _vni, ...vehiculoPublico } = vehiculo
+      const trabajosPublicos = vehiculo.trabajos.map((t) => {
+        const { notasInternas: _tni, ...trabajoPublico } = t
+        return trabajoPublico
+      })
+      return NextResponse.json({
+        vehiculo: { ...vehiculoPublico, trabajos: trabajosPublicos },
+      })
     }
 
     return NextResponse.json(

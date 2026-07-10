@@ -54,6 +54,9 @@ export async function PATCH(
         datos.recordatorio = null
       }
     }
+    if (body.notasInternas !== undefined) {
+      datos.notasInternas = body.notasInternas || null
+    }
 
     if (Object.keys(datos).length === 0) {
       return NextResponse.json(

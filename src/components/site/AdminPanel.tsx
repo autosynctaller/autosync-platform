@@ -45,6 +45,8 @@ import {
   Clock,
   Bell,
   MessageCircle,
+  FileText,
+  Download,
 } from 'lucide-react'
 
 interface ServicioOption {
@@ -75,6 +77,7 @@ interface TrabajoDetalle {
   kilometraje: number | null
   proximo: string | null
   recordatorio: string | null
+  notasInternas: string | null
   servicio: { nombre: string; categoria: string } | null
 }
 
@@ -83,6 +86,16 @@ interface FotoDetalle {
   url: string
   descripcion: string | null
   esPrivada: boolean
+  createdAt: string
+}
+
+interface DocumentoDetalle {
+  id: string
+  url: string
+  nombre: string
+  tipo: string
+  tamaño: number
+  descripcion: string | null
   createdAt: string
 }
 
@@ -97,6 +110,7 @@ interface VehiculoDetalle {
   tipo: string
   combustible: string | null
   notas: string | null
+  notasInternas: string | null
   cliente: {
     nombre: string
     telefono: string
@@ -105,6 +119,7 @@ interface VehiculoDetalle {
   }
   trabajos: TrabajoDetalle[]
   fotos: FotoDetalle[]
+  documentos: DocumentoDetalle[]
 }
 
 const ESTADOS = ['Completado', 'En proceso', 'Pendiente']
@@ -146,6 +161,7 @@ export function AdminPanel({
     fecha: '', // YYYY-MM-DD
     kilometraje: '',
     recordatorio: '', // YYYY-MM-DD (opcional)
+    notasInternas: '', // Notas solo para el taller
   })
   const [guardando, setGuardando] = useState(false)
 
@@ -154,6 +170,10 @@ export function AdminPanel({
   const [descripcionFoto, setDescripcionFoto] = useState('')
   const [fotoPrivada, setFotoPrivada] = useState(false)
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null)
+
+  // documentos
+  const [subiendoDoc, setSubiendoDoc] = useState(false)
+  const [descripcionDoc, setDescripcionDoc] = useState('')
 
   // recordatorios
   const [recordatorios, setRecordatorios] = useState<Array<{
@@ -190,6 +210,7 @@ export function AdminPanel({
     tipo: 'Auto',
     combustible: 'Nafta',
     notas: '',
+    notasInternas: '',
     cliente_nombre: '',
     cliente_telefono: '',
     cliente_email: '',
@@ -333,6 +354,7 @@ export function AdminPanel({
             ? Number(nuevoTrabajo.kilometraje)
             : null,
           recordatorio: nuevoTrabajo.recordatorio || null,
+          notasInternas: nuevoTrabajo.notasInternas || null,
         }),
       })
       const data = await res.json()
@@ -353,6 +375,7 @@ export function AdminPanel({
         fecha: hoy,
         kilometraje: '',
         recordatorio: '',
+        notasInternas: '',
       })
       // recargar detalle
       await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
@@ -438,6 +461,81 @@ export function AdminPanel({
     }
   }
 
+  // Subir documento (PDF)
+  const subirDocumento = async (file: File) => {
+    if (!vehiculoDetalle || !authToken) return
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'Archivo muy pesado',
+        description: 'Máximo 10 MB por documento.',
+        variant: 'destructive',
+      })
+      return
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase() || ''
+    if (!['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+      toast({
+        title: 'Tipo no permitido',
+        description: 'Solo PDF, JPG, PNG o WEBP.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setSubiendoDoc(true)
+    try {
+      const formData = new FormData()
+      formData.append('documento', file)
+      formData.append('descripcion', descripcionDoc)
+      const res = await fetch(`/api/vehiculos/${vehiculoDetalle.id}/documentos`, {
+        method: 'POST',
+        headers: { 'x-admin-pin': authToken },
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al subir documento')
+      toast({ title: 'Documento agregado', description: 'El archivo se guardó correctamente.' })
+      setDescripcionDoc('')
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al subir documento',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSubiendoDoc(false)
+    }
+  }
+
+  // Borrar documento
+  const borrarDocumento = async (docId: string) => {
+    if (!vehiculoDetalle || !authToken) return
+    if (!confirm('¿Seguro que querés borrar este documento?')) return
+    try {
+      const res = await fetch(
+        `/api/vehiculos/${vehiculoDetalle.id}/documentos/${docId}`,
+        {
+          method: 'DELETE',
+          headers: { 'x-admin-pin': authToken },
+        },
+      )
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error al borrar')
+      }
+      toast({ title: 'Documento eliminado' })
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al borrar documento',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   // Iniciar edición de un trabajo
   const iniciarEditarTrabajo = (t: TrabajoDetalle) => {
     setTrabajoEditando(t)
@@ -451,6 +549,7 @@ export function AdminPanel({
       fecha: t.fecha.split('T')[0],
       kilometraje: t.kilometraje != null ? String(t.kilometraje) : '',
       recordatorio: t.recordatorio ? t.recordatorio.split('T')[0] : '',
+      notasInternas: t.notasInternas || '',
     })
     setPaso('editar-trabajo')
   }
@@ -486,6 +585,7 @@ export function AdminPanel({
             ? Number(nuevoTrabajo.kilometraje)
             : null,
           recordatorio: nuevoTrabajo.recordatorio || null,
+          notasInternas: nuevoTrabajo.notasInternas || null,
         }),
       })
       const data = await res.json()
@@ -549,6 +649,7 @@ export function AdminPanel({
       tipo: vehiculoDetalle.tipo,
       combustible: vehiculoDetalle.combustible || 'Nafta',
       notas: vehiculoDetalle.notas || '',
+      notasInternas: vehiculoDetalle.notasInternas || '',
       cliente_nombre: vehiculoDetalle.cliente.nombre,
       cliente_telefono: vehiculoDetalle.cliente.telefono,
       cliente_email: vehiculoDetalle.cliente.email || '',
@@ -588,6 +689,7 @@ export function AdminPanel({
           tipo: editVehiculo.tipo,
           combustible: editVehiculo.combustible || null,
           notas: editVehiculo.notas || null,
+          notasInternas: editVehiculo.notasInternas || null,
           cliente_nombre: editVehiculo.cliente_nombre,
           cliente_telefono: editVehiculo.cliente_telefono,
           cliente_email: editVehiculo.cliente_email,
@@ -836,6 +938,7 @@ export function AdminPanel({
                               kilometraje:
                                 vehiculoDetalle.kilometraje?.toString() || '',
                               recordatorio: '',
+                              notasInternas: '',
                             })
                             setPaso('cargar')
                           }}
@@ -847,6 +950,22 @@ export function AdminPanel({
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Notas internas del vehículo (solo taller) */}
+                {vehiculoDetalle.notasInternas && (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-800">
+                      <Lock className="h-4 w-4" />
+                      Notas internas del taller
+                    </h4>
+                    <p className="text-sm whitespace-pre-wrap text-amber-900">
+                      {vehiculoDetalle.notasInternas}
+                    </p>
+                    <p className="mt-2 text-[10px] uppercase tracking-wider text-amber-700">
+                      🔒 Solo visible para el taller
+                    </p>
+                  </div>
+                )}
 
                 {/* Sección de fotos del vehículo */}
                 <div>
@@ -979,6 +1098,124 @@ export function AdminPanel({
                   )}
                 </div>
 
+                {/* Sección de documentos (PDFs, informes de scanner, etc.) */}
+                <div>
+                  <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Documentos ({vehiculoDetalle.documentos.length}/20)
+                    <Lock className="h-3 w-3 text-amber-600" />
+                    <span className="text-[10px] font-normal text-amber-700">
+                      Solo taller
+                    </span>
+                  </h4>
+
+                  {/* Subir nuevo documento */}
+                  <div className="mb-3 rounded-lg border border-dashed border-border/60 bg-muted/30 p-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Input
+                        value={descripcionDoc}
+                        onChange={(e) => setDescripcionDoc(e.target.value)}
+                        placeholder="Descripción (opcional) - Ej: Informe de scanner, presupuesto..."
+                        className="flex-1"
+                      />
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                        {subiendoDoc ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Subiendo...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-4 w-4" />
+                            Subir documento
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*"
+                          className="hidden"
+                          disabled={subiendoDoc || vehiculoDetalle.documentos.length >= 20}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) subirDocumento(f)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Subí informes de scanner, presupuestos, facturas, etc. PDF,
+                      JPG o PNG (máx 10 MB). 🔒 Solo vos los ves.
+                    </p>
+                  </div>
+
+                  {/* Lista de documentos */}
+                  {vehiculoDetalle.documentos.length === 0 ? (
+                    <Card className="border-dashed">
+                      <CardContent className="flex flex-col items-center gap-2 p-6 text-center text-sm text-muted-foreground">
+                        <FileText className="h-8 w-8 opacity-40" />
+                        <span>Aún no hay documentos cargados.</span>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <ul className="space-y-2">
+                      {vehiculoDetalle.documentos.map((doc) => {
+                        const esPdf = doc.tipo === 'application/pdf' || doc.nombre.toLowerCase().endsWith('.pdf')
+                        const tamañoKB = Math.round(doc.tamaño / 1024)
+                        return (
+                          <li
+                            key={doc.id}
+                            className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card p-3"
+                          >
+                            <div
+                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${
+                                esPdf
+                                  ? 'bg-red-100 text-red-600'
+                                  : 'bg-blue-100 text-blue-600'
+                              }`}
+                            >
+                              <FileText className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">
+                                {doc.nombre}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {tamañoKB < 1024
+                                  ? `${tamañoKB} KB`
+                                  : `${(tamañoKB / 1024).toFixed(1)} MB`}
+                                {doc.descripcion && ` · ${doc.descripcion}`}
+                                {' · '}{formatFecha(doc.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex gap-1">
+                              <a
+                                href={doc.url}
+                                download={doc.nombre}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded p-2 text-muted-foreground hover:bg-muted hover:text-primary"
+                                aria-label="Descargar documento"
+                                title="Descargar"
+                              >
+                                <Download className="h-4 w-4" />
+                              </a>
+                              <button
+                                onClick={() => borrarDocumento(doc.id)}
+                                className="rounded p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                aria-label="Eliminar documento"
+                                title="Eliminar"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
+
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
                     <Wrench className="h-4 w-4 text-primary" />
@@ -1031,6 +1268,11 @@ export function AdminPanel({
                                 )}
                                 {t.proximo && ` · Próximo: ${t.proximo}`}
                               </p>
+                              {t.notasInternas && (
+                                <p className="mt-1 rounded bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+                                  🔒 {t.notasInternas}
+                                </p>
+                              )}
                             </div>
                             <div className="text-right">
                               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -1272,6 +1514,27 @@ export function AdminPanel({
               )}
             </div>
 
+            <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <Label htmlFor="t-ni" className="flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-amber-600" /> Notas internas del taller
+              </Label>
+              <Textarea
+                id="t-ni"
+                value={nuevoTrabajo.notasInternas}
+                onChange={(e) =>
+                  setNuevoTrabajo((nt) => ({
+                    ...nt,
+                    notasInternas: e.target.value,
+                  }))
+                }
+                placeholder="Solo vos ves esto. Ej: cliente moroso, repuesto pedido, observaciones técnicas..."
+                rows={2}
+              />
+              <p className="text-xs text-amber-700">
+                🔒 Estas notas son privadas, el cliente no las ve.
+              </p>
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"
@@ -1466,6 +1729,27 @@ export function AdminPanel({
                   Quitar recordatorio
                 </Button>
               )}
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <Label htmlFor="et-ni" className="flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-amber-600" /> Notas internas del taller
+              </Label>
+              <Textarea
+                id="et-ni"
+                value={nuevoTrabajo.notasInternas}
+                onChange={(e) =>
+                  setNuevoTrabajo((nt) => ({
+                    ...nt,
+                    notasInternas: e.target.value,
+                  }))
+                }
+                placeholder="Solo vos ves esto. Ej: cliente moroso, repuesto pedido, observaciones técnicas..."
+                rows={2}
+              />
+              <p className="text-xs text-amber-700">
+                🔒 Estas notas son privadas, el cliente no las ve.
+              </p>
             </div>
 
             <DialogFooter>
@@ -1675,14 +1959,31 @@ export function AdminPanel({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Notas</Label>
+                <Label className="text-xs">Notas visibles para el cliente</Label>
                 <Textarea
                   value={editVehiculo.notas}
                   onChange={(e) =>
                     setEditVehiculo((ev) => ({ ...ev, notas: e.target.value }))
                   }
-                  rows={3}
-                  placeholder="Notas internas del taller sobre este vehículo"
+                  rows={2}
+                  placeholder="Notas que el cliente verá en su historial"
+                />
+              </div>
+              <div className="space-y-1.5 rounded-lg border border-amber-300 bg-amber-50 p-2">
+                <Label className="flex items-center gap-1.5 text-xs text-amber-700">
+                  <Lock className="h-3 w-3" /> Notas internas (solo taller)
+                </Label>
+                <Textarea
+                  value={editVehiculo.notasInternas}
+                  onChange={(e) =>
+                    setEditVehiculo((ev) => ({
+                      ...ev,
+                      notasInternas: e.target.value,
+                    }))
+                  }
+                  rows={2}
+                  placeholder="🔒 Solo vos ves esto. Ej: cliente moroso, historial de pagos, observaciones técnicas..."
+                  className="border-amber-300"
                 />
               </div>
             </fieldset>

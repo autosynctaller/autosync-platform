@@ -21,21 +21,23 @@ model Cliente {
 }
 
 model Vehiculo {
-  id          String        @id @default(cuid())
-  marca       String
-  modelo      String
-  anio        Int
-  patente     String        @unique
-  color       String?
-  kilometraje Int?
-  tipo        String        // Auto, Camioneta, Moto, Utilitario
-  combustible String?       // Nafta, Diesel, GNC, Eléctrico, Híbrido
-  notas       String?
-  clienteId   String
-  cliente     Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  trabajos    Trabajo[]
-  fotos       FotoVehiculo[]
-  createdAt   DateTime      @default(now())
+  id             String            @id @default(cuid())
+  marca          String
+  modelo         String
+  anio           Int
+  patente        String            @unique
+  color          String?
+  kilometraje    Int?
+  tipo           String            // Auto, Camioneta, Moto, Utilitario
+  combustible    String?           // Nafta, Diesel, GNC, Eléctrico, Híbrido
+  notas          String?           // Notas visibles para el cliente
+  notasInternas  String?           // Notas SOLO para el taller (no visibles para el cliente)
+  clienteId      String
+  cliente        Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  trabajos       Trabajo[]
+  fotos          FotoVehiculo[]
+  documentos     DocumentoVehiculo[]
+  createdAt      DateTime          @default(now())
 }
 
 model Trabajo {
@@ -52,6 +54,7 @@ model Trabajo {
   kilometraje      Int?      // KM del vehículo al momento del trabajo
   proximo          String?   // Texto libre: "A los 90.000 km" o "en 6 meses"
   recordatorio     DateTime? // Fecha exacta en la que se debe enviar recordatorio
+  notasInternas    String?   // Notas SOLO para el taller (no visibles para el cliente)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
@@ -76,5 +79,17 @@ model FotoVehiculo {
   url         String   // Ruta relativa /uploads/vehiculos/...
   descripcion String?
   esPrivada   Boolean  @default(false) // Si es true, solo la ve el admin
+  createdAt   DateTime @default(now())
+}
+
+model DocumentoVehiculo {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  url         String   // Ruta relativa /uploads/documentos/...
+  nombre      String   // Nombre original del archivo
+  tipo        String   // MIME type (ej: application/pdf)
+  tamaño      Int      // Tamaño en bytes
+  descripcion String?
   createdAt   DateTime @default(now())
 }
