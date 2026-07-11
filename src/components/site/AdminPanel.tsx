@@ -48,6 +48,13 @@ import {
   FileText,
   Download,
   Check,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Users,
+  Stethoscope,
+  AlertCircle,
 } from 'lucide-react'
 
 interface ServicioOption {
@@ -92,6 +99,7 @@ interface FotoDetalle {
   url: string
   descripcion: string | null
   esPrivada: boolean
+  categoria: string
   createdAt: string
 }
 
@@ -103,6 +111,20 @@ interface DocumentoDetalle {
   tamaño: number
   descripcion: string | null
   createdAt: string
+}
+
+interface DiagnosticoDetalle {
+  id: string
+  titulo: string
+  sintoma: string
+  pruebasRealizadas: string | null
+  resultadoPrueba: string | null
+  diagnostico: string | null
+  solucion: string | null
+  resultadoFinal: string | null
+  estado: string
+  kilometraje: number | null
+  fecha: string
 }
 
 interface VehiculoDetalle {
@@ -129,6 +151,7 @@ interface VehiculoDetalle {
   trabajos: TrabajoDetalle[]
   fotos: FotoDetalle[]
   documentos: DocumentoDetalle[]
+  diagnosticos: DiagnosticoDetalle[]
 }
 
 const ESTADOS = ['Completado', 'En proceso', 'Pendiente']
@@ -142,7 +165,7 @@ export function AdminPanel({
 }) {
   const { toast } = useToast()
   const [paso, setPaso] = useState<
-    'login' | 'lista' | 'detalle' | 'cargar' | 'editar-trabajo' | 'editar-vehiculo' | 'recordatorios'
+    'login' | 'lista' | 'detalle' | 'cargar' | 'editar-trabajo' | 'editar-vehiculo' | 'recordatorios' | 'estadisticas' | 'buscar-sintomas' | 'diagnostico-nuevo' | 'diagnostico-editar'
   >('login')
   const [pin, setPin] = useState('')
   const [authToken, setAuthToken] = useState<string | null>(null)
@@ -178,6 +201,8 @@ export function AdminPanel({
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [descripcionFoto, setDescripcionFoto] = useState('')
   const [fotoPrivada, setFotoPrivada] = useState(false)
+  const [fotoCategoria, setFotoCategoria] = useState('general')
+  const [filtroFotos, setFiltroFotos] = useState('todas')
   const [fotoSeleccionada, setFotoSeleccionada] = useState<string | null>(null)
 
   // documentos
@@ -208,6 +233,86 @@ export function AdminPanel({
     }
   }>>([])
   const [cargandoRecordatorios, setCargandoRecordatorios] = useState(false)
+
+  // estadísticas
+  const [estadisticas, setEstadisticas] = useState<{
+    totales: {
+      vehiculos: number
+      clientes: number
+      trabajos: number
+      trabajosMes: number
+      trabajosAnio: number
+      ingresosMes: number
+      ingresosAnio: number
+      ingresosTotales: number
+      variacionTrabajos: number
+      variacionIngresos: number
+    }
+    trabajosPorEstado: Array<{ estado: string; cantidad: number }>
+    trabajosPorMes: Array<{ mes: string; cantidad: number; ingresos: number }>
+    serviciosMasRealizados: Array<{ nombre: string; cantidad: number }>
+    titulosMasUsados: Array<{ titulo: string; cantidad: number }>
+    vencimientos: {
+      vtvVencida: number
+      vtvProxima: number
+      gncVencida: number
+      gncProxima: number
+      recordatoriosPendientes: number
+    }
+  } | null>(null)
+  const [cargandoEstadisticas, setCargandoEstadisticas] = useState(false)
+
+  // diagnósticos
+  const [nuevoDiag, setNuevoDiag] = useState({
+    titulo: '',
+    sintoma: '',
+    pruebasRealizadas: '',
+    resultadoPrueba: '',
+    diagnostico: '',
+    solucion: '',
+    resultadoFinal: '',
+    estado: 'En diagnóstico',
+    kilometraje: '',
+    fecha: '',
+  })
+  const [diagEditando, setDiagEditando] = useState<DiagnosticoDetalle | null>(null)
+  const [guardandoDiag, setGuardandoDiag] = useState(false)
+
+  // búsqueda global de síntomas
+  const [busquedaSintoma, setBusquedaSintoma] = useState('')
+  const [resultadosBusqueda, setResultadosBusqueda] = useState<Array<{
+    id: string
+    titulo: string
+    sintoma: string
+    diagnostico: string | null
+    solucion: string | null
+    resultadoFinal: string | null
+    estado: string
+    fecha: string
+    kilometraje: number | null
+    vehiculo: { id: string; marca: string; modelo: string; patente: string; anio: number }
+    cliente: { nombre: string }
+    camposEncontrados: string[]
+  }>>([])
+  const [buscando, setBuscando] = useState(false)
+  const [busquedaRealizada, setBusquedaRealizada] = useState(false)
+
+  // cronograma sugerido
+  const [cronogramaSugerido, setCronogramaSugerido] = useState<{
+    marca: string
+    modelo: string
+    kilometraje: number
+    items: string
+    notas: string | null
+  } | null>(null)
+  const [cronogramaProximo, setCronogramaProximo] = useState<{
+    marca: string
+    modelo: string
+    kilometraje: number
+    items: string
+    notas: string | null
+  } | null>(null)
+  const [cargandoCronograma, setCargandoCronograma] = useState(false)
 
   // edición
   const [trabajoEditando, setTrabajoEditando] = useState<TrabajoDetalle | null>(null)
@@ -316,13 +421,56 @@ export function AdminPanel({
     }
   }, [])
 
+  const cargarEstadisticas = useCallback(async (token: string) => {
+    setCargandoEstadisticas(true)
+    try {
+      const res = await fetch('/api/estadisticas', {
+        headers: { 'x-admin-pin': token },
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setEstadisticas(data)
+      }
+    } catch {
+      // silencioso
+    } finally {
+      setCargandoEstadisticas(false)
+    }
+  }, [])
+
   const verDetalle = async (v: VehiculoListItem) => {
     setDetalleLoading(true)
     setPaso('detalle')
+    setCronogramaSugerido(null)
+    setCronogramaProximo(null)
     try {
       const res = await fetch(`/api/vehiculos/${v.id}`)
       const data = await res.json()
       setVehiculoDetalle(data.vehiculo)
+
+      // Cargar cronograma sugerido según marca y km
+      if (data.vehiculo?.marca && data.vehiculo?.kilometraje != null && authToken) {
+        setCargandoCronograma(true)
+        try {
+          const params = new URLSearchParams({
+            marca: data.vehiculo.marca,
+            modelo: data.vehiculo.modelo,
+            km: String(data.vehiculo.kilometraje),
+          })
+          const cr = await fetch(`/api/cronogramas?${params}`, {
+            headers: { 'x-admin-pin': authToken },
+          })
+          const crData = await cr.json()
+          if (cr.ok) {
+            setCronogramaSugerido(crData.sugerido || null)
+            setCronogramaProximo(crData.proximo || null)
+          }
+        } catch {
+          // silencioso
+        } finally {
+          setCargandoCronograma(false)
+        }
+      }
     } catch {
       toast({
         title: 'Error',
@@ -421,6 +569,7 @@ export function AdminPanel({
       formData.append('foto', file)
       formData.append('descripcion', descripcionFoto)
       formData.append('esPrivada', String(fotoPrivada))
+      formData.append('categoria', fotoCategoria)
       const res = await fetch(`/api/vehiculos/${vehiculoDetalle.id}/fotos`, {
         method: 'POST',
         headers: { 'x-admin-pin': authToken },
@@ -431,6 +580,7 @@ export function AdminPanel({
       toast({ title: 'Foto agregada', description: 'La foto se guardó correctamente.' })
       setDescripcionFoto('')
       setFotoPrivada(false)
+      setFotoCategoria('general')
       await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
     } catch (err: unknown) {
       toast({
@@ -573,6 +723,144 @@ export function AdminPanel({
           err instanceof Error ? err.message : 'Intentá de nuevo.',
         variant: 'destructive',
       })
+    }
+  }
+
+  // Crear o editar diagnóstico
+  const guardarDiagnostico = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!vehiculoDetalle || !authToken) return
+    if (!nuevoDiag.titulo || !nuevoDiag.sintoma) {
+      toast({
+        title: 'Faltan datos',
+        description: 'Título y síntoma son obligatorios.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setGuardandoDiag(true)
+    try {
+      const url = diagEditando
+        ? `/api/vehiculos/${vehiculoDetalle.id}/diagnosticos`
+        : `/api/vehiculos/${vehiculoDetalle.id}/diagnosticos`
+      const method = diagEditando ? 'PATCH' : 'POST'
+      // Nota: PATCH no está implementado en este endpoint todavía, usamos POST para crear
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pin': authToken,
+        },
+        body: JSON.stringify({
+          titulo: nuevoDiag.titulo,
+          sintoma: nuevoDiag.sintoma,
+          pruebasRealizadas: nuevoDiag.pruebasRealizadas || null,
+          resultadoPrueba: nuevoDiag.resultadoPrueba || null,
+          diagnostico: nuevoDiag.diagnostico || null,
+          solucion: nuevoDiag.solucion || null,
+          resultadoFinal: nuevoDiag.resultadoFinal || null,
+          estado: nuevoDiag.estado,
+          kilometraje: nuevoDiag.kilometraje
+            ? Number(nuevoDiag.kilometraje)
+            : null,
+          fecha: nuevoDiag.fecha || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      toast({
+        title: diagEditando ? 'Diagnóstico actualizado' : 'Diagnóstico creado',
+        description: 'Se guardó correctamente.',
+      })
+      setNuevoDiag({
+        titulo: '',
+        sintoma: '',
+        pruebasRealizadas: '',
+        resultadoPrueba: '',
+        diagnostico: '',
+        solucion: '',
+        resultadoFinal: '',
+        estado: 'En diagnóstico',
+        kilometraje: '',
+        fecha: new Date().toISOString().split('T')[0],
+      })
+      setDiagEditando(null)
+      await verDetalle(vehiculoDetalle as unknown as VehiculoListItem)
+      setPaso('detalle')
+    } catch (err: unknown) {
+      toast({
+        title: 'Error al guardar diagnóstico',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setGuardandoDiag(false)
+    }
+  }
+
+  // Iniciar edición de diagnóstico (cargar en el form)
+  const iniciarEditarDiag = (d: DiagnosticoDetalle) => {
+    setDiagEditando(d)
+    setNuevoDiag({
+      titulo: d.titulo,
+      sintoma: d.sintoma,
+      pruebasRealizadas: d.pruebasRealizadas || '',
+      resultadoPrueba: d.resultadoPrueba || '',
+      diagnostico: d.diagnostico || '',
+      solucion: d.solucion || '',
+      resultadoFinal: d.resultadoFinal || '',
+      estado: d.estado,
+      kilometraje: d.kilometraje != null ? String(d.kilometraje) : '',
+      fecha: d.fecha.split('T')[0],
+    })
+    setPaso('diagnostico-editar')
+  }
+
+  // Búsqueda global de síntomas
+  const buscarSintomas = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!authToken || busquedaSintoma.trim().length < 2) {
+      toast({
+        title: 'Muy corto',
+        description: 'Ingresá al menos 2 caracteres.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setBuscando(true)
+    setBusquedaRealizada(true)
+    try {
+      const res = await fetch(
+        `/api/diagnosticos/buscar?q=${encodeURIComponent(busquedaSintoma)}`,
+        { headers: { 'x-admin-pin': authToken } },
+      )
+      const data = await res.json()
+      if (res.ok) {
+        setResultadosBusqueda(data.resultados || [])
+        if (data.resultados.length === 0) {
+          toast({
+            title: 'Sin resultados',
+            description: `No encontramos diagnósticos con "${busquedaSintoma}".`,
+          })
+        } else {
+          toast({
+            title: 'Búsqueda completada',
+            description: `${data.resultados.length} resultado(s) encontrado(s).`,
+          })
+        }
+      } else {
+        throw new Error(data.error || 'Error en la búsqueda')
+      }
+    } catch (err: unknown) {
+      toast({
+        title: 'Error en la búsqueda',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setBuscando(false)
     }
   }
 
@@ -855,6 +1143,30 @@ export function AdminPanel({
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    void cargarEstadisticas(authToken)
+                    setPaso('estadisticas')
+                  }}
+                >
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Estadísticas
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBusquedaSintoma('')
+                    setResultadosBusqueda([])
+                    setBusquedaRealizada(false)
+                    setPaso('buscar-sintomas')
+                  }}
+                >
+                  <Search className="mr-2 h-4 w-4" />
+                  Buscar síntomas
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
                     void cargarRecordatorios(authToken)
                     setPaso('recordatorios')
                   }}
@@ -1104,63 +1416,218 @@ export function AdminPanel({
                   </div>
                 )}
 
+                {/* Cronograma de service sugerido por el fabricante */}
+                {vehiculoDetalle.kilometraje != null && (
+                  <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4">
+                    <h4 className="mb-1 flex items-center gap-2 text-sm font-semibold text-primary">
+                      <Calendar className="h-4 w-4" />
+                      Cronograma de services - {vehiculoDetalle.marca}
+                    </h4>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Según los {vehiculoDetalle.kilometraje.toLocaleString('es-AR')} km actuales.
+                      🔒 Solo para el taller.
+                    </p>
+
+                    {cargandoCronograma ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Cargando cronograma...
+                      </div>
+                    ) : !cronogramaSugerido && !cronogramaProximo ? (
+                      <div className="rounded border border-dashed border-border/60 bg-background/50 p-3 text-xs text-muted-foreground">
+                        No hay cronograma pre-cargado para {vehiculoDetalle.marca}.{' '}
+                        Podés cargarlo desde la sección de Cronogramas.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Service que le tocaría según los km */}
+                        {cronogramaSugerido && (
+                          <div className="rounded-md border border-amber-300 bg-amber-50 p-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-800">
+                              ⚠️ Service de los {cronogramaSugerido.kilometraje.toLocaleString('es-AR')} km - Le corresponde ahora
+                            </p>
+                            <ul className="space-y-1 text-xs text-amber-900">
+                              {cronogramaSugerido.items.split('\n').map((item, i) => (
+                                <li key={i} className="flex gap-1.5">
+                                  <span className="text-amber-600">•</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {cronogramaSugerido.notas && (
+                              <p className="mt-2 rounded bg-amber-100 p-2 text-[11px] italic text-amber-800">
+                                💡 {cronogramaSugerido.notas}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Próximo service que le tocará */}
+                        {cronogramaProximo && (
+                          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
+                              ✓ Próximo service: a los {cronogramaProximo.kilometraje.toLocaleString('es-AR')} km
+                              {vehiculoDetalle.kilometraje != null && (
+                                <span className="ml-1 font-normal text-emerald-600">
+                                  (faltan {(cronogramaProximo.kilometraje - vehiculoDetalle.kilometraje).toLocaleString('es-AR')} km)
+                                </span>
+                              )}
+                            </p>
+                            <ul className="space-y-1 text-xs text-emerald-900">
+                              {cronogramaProximo.items.split('\n').map((item, i) => (
+                                <li key={i} className="flex gap-1.5">
+                                  <span className="text-emerald-600">•</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                            {cronogramaProximo.notas && (
+                              <p className="mt-2 rounded bg-emerald-100 p-2 text-[11px] italic text-emerald-800">
+                                💡 {cronogramaProximo.notas}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Botón para cargar el service sugerido como trabajo */}
+                        {cronogramaSugerido && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              const hoy = new Date().toISOString().split('T')[0]
+                              setNuevoTrabajo({
+                                servicioId: '',
+                                titulo: `Service de los ${cronogramaSugerido.kilometraje.toLocaleString('es-AR')} km`,
+                                descripcion: cronogramaSugerido.items,
+                                precio: '',
+                                estado: 'Completado',
+                                proximo: cronogramaProximo
+                                  ? `A los ${cronogramaProximo.kilometraje.toLocaleString('es-AR')} km`
+                                  : '',
+                                fecha: hoy,
+                                kilometraje: vehiculoDetalle.kilometraje?.toString() || '',
+                                recordatorio: '',
+                                notasInternas: '',
+                              })
+                              setPaso('cargar')
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cargar este service como trabajo
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Sección de fotos del vehículo */}
                 <div>
                   <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold">
                     <Camera className="h-4 w-4 text-primary" />
-                    Fotos del vehículo ({vehiculoDetalle.fotos.length}/8)
+                    Fotos del vehículo ({vehiculoDetalle.fotos.length})
                   </h4>
 
                   {/* Subir nueva foto */}
                   <div className="mb-3 rounded-lg border border-dashed border-border/60 bg-muted/30 p-3">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <Input
-                        value={descripcionFoto}
-                        onChange={(e) => setDescripcionFoto(e.target.value)}
-                        placeholder="Descripción (opcional)"
-                        className="flex-1"
-                      />
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                        {subiendoFoto ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Subiendo...
-                          </>
-                        ) : (
-                          <>
-                            <Camera className="h-4 w-4" />
-                            Subir foto
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          className="hidden"
-                          disabled={subiendoFoto || vehiculoDetalle.fotos.length >= 8}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0]
-                            if (f) subirFoto(f)
-                            e.target.value = ''
-                          }}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          value={descripcionFoto}
+                          onChange={(e) => setDescripcionFoto(e.target.value)}
+                          placeholder="Descripción (opcional)"
+                          className="flex-1"
                         />
-                      </label>
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                          {subiendoFoto ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Subiendo...
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="h-4 w-4" />
+                              Subir foto
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            disabled={subiendoFoto || (fotoCategoria !== 'todas' && vehiculoDetalle.fotos.filter((f) => f.categoria === fotoCategoria).length >= 8)}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0]
+                              if (f) subirFoto(f)
+                              e.target.value = ''
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                          value={fotoCategoria}
+                          onValueChange={setFotoCategoria}
+                        >
+                          <SelectTrigger className="h-8 w-auto text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="general">📷 General</SelectItem>
+                            <SelectItem value="dano">⚠️ Daño</SelectItem>
+                            <SelectItem value="repuesto">🔧 Repuesto</SelectItem>
+                            <SelectItem value="trabajo_terminado">✅ Trabajo terminado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <input
+                            type="checkbox"
+                            checked={fotoPrivada}
+                            onChange={(e) => setFotoPrivada(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-border"
+                          />
+                          Foto <strong className="text-foreground">privada</strong> (solo taller)
+                        </label>
+                      </div>
                     </div>
-                    <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                      <input
-                        type="checkbox"
-                        checked={fotoPrivada}
-                        onChange={(e) => setFotoPrivada(e.target.checked)}
-                        className="h-3.5 w-3.5 rounded border-border"
-                      />
-                      Marcar como <strong className="text-foreground">foto privada</strong> (solo visible para el taller, no para el cliente)
-                    </label>
-                    {vehiculoDetalle.fotos.length >= 8 && (
-                      <p className="mt-2 text-xs text-amber-600">
-                        Alcanzaste el máximo de 8 fotos. Eliminá alguna para subir otra.
-                      </p>
-                    )}
                   </div>
+
+                  {/* Filtros por categoría con contador X/8 */}
+                  {vehiculoDetalle.fotos.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      {['todas', 'general', 'dano', 'repuesto', 'trabajo_terminado'].map((cat) => {
+                        const count = cat === 'todas'
+                          ? vehiculoDetalle.fotos.length
+                          : vehiculoDetalle.fotos.filter((f) => f.categoria === cat).length
+                        if (cat !== 'todas' && count === 0) return null
+                        const labels: Record<string, string> = {
+                          todas: '📷 Todas',
+                          general: '📷 General',
+                          dano: '⚠️ Daños',
+                          repuesto: '🔧 Repuestos',
+                          trabajo_terminado: '✅ Trabajo terminado',
+                        }
+                        const contador = cat === 'todas'
+                          ? `${count}`
+                          : `${count}/8`
+                        return (
+                          <button
+                            key={cat}
+                            onClick={() => setFiltroFotos(cat)}
+                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                              filtroFotos === cat
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            }`}
+                          >
+                            {labels[cat]} ({contador})
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
 
                   {/* Grilla de fotos */}
                   {vehiculoDetalle.fotos.length === 0 ? (
@@ -1171,45 +1638,73 @@ export function AdminPanel({
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                      {vehiculoDetalle.fotos.map((foto) => (
-                        <div
-                          key={foto.id}
-                          className={`group relative aspect-square overflow-hidden rounded-md border-2 ${
-                            foto.esPrivada
-                              ? 'border-amber-400'
-                              : 'border-border/60'
-                          }`}
-                        >
-                          <img
-                            src={foto.url}
-                            alt={foto.descripcion || 'Foto del vehículo'}
-                            className="h-full w-full cursor-pointer object-cover"
-                            onClick={() => setFotoSeleccionada(foto.url)}
-                          />
-                          {foto.esPrivada && (
-                            <div className="absolute left-1 top-1 rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
-                              Privada
-                            </div>
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              borrarFoto(foto.id)
-                            }}
-                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                            aria-label="Eliminar foto"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                          {foto.descripcion && (
-                            <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-[10px] text-white">
-                              {foto.descripcion}
-                            </div>
-                          )}
+                    (() => {
+                      const fotosFiltradas = filtroFotos === 'todas'
+                        ? vehiculoDetalle.fotos
+                        : vehiculoDetalle.fotos.filter((f) => f.categoria === filtroFotos)
+                      const catLabels: Record<string, { label: string; color: string }> = {
+                        general: { label: 'General', color: 'bg-blue-500' },
+                        dano: { label: 'Daño', color: 'bg-red-500' },
+                        repuesto: { label: 'Repuesto', color: 'bg-amber-500' },
+                        trabajo_terminado: { label: 'Trabajo', color: 'bg-emerald-500' },
+                      }
+                      if (fotosFiltradas.length === 0) {
+                        return (
+                          <p className="py-6 text-center text-xs text-muted-foreground">
+                            No hay fotos en esta categoría.
+                          </p>
+                        )
+                      }
+                      return (
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                          {fotosFiltradas.map((foto) => {
+                            const cat = catLabels[foto.categoria] || catLabels.general
+                            return (
+                              <div
+                                key={foto.id}
+                                className={`group relative aspect-square overflow-hidden rounded-md border-2 ${
+                                  foto.esPrivada
+                                    ? 'border-amber-400'
+                                    : 'border-border/60'
+                                }`}
+                              >
+                                <img
+                                  src={foto.url}
+                                  alt={foto.descripcion || 'Foto del vehículo'}
+                                  className="h-full w-full cursor-pointer object-cover"
+                                  onClick={() => setFotoSeleccionada(foto.url)}
+                                />
+                                <div className="absolute left-1 top-1 flex flex-col gap-0.5">
+                                  <span className={`rounded px-1 py-0.5 text-[8px] font-bold uppercase text-white ${cat.color}`}>
+                                    {cat.label}
+                                  </span>
+                                  {foto.esPrivada && (
+                                    <span className="rounded bg-amber-500 px-1 py-0.5 text-[8px] font-bold uppercase text-white">
+                                      Privada
+                                    </span>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    borrarFoto(foto.id)
+                                  }}
+                                  className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                                  aria-label="Eliminar foto"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                                {foto.descripcion && (
+                                  <div className="absolute inset-x-0 bottom-0 bg-black/60 px-1 py-0.5 text-[10px] text-white">
+                                    {foto.descripcion}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })()
                   )}
 
                   {/* Visor de foto ampliada */}
@@ -1350,6 +1845,104 @@ export function AdminPanel({
                         )
                       })}
                     </ul>
+                  )}
+                </div>
+
+                {/* Sección de Diagnósticos */}
+                <div>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h4 className="flex items-center gap-2 text-sm font-semibold">
+                      <Stethoscope className="h-4 w-4 text-primary" />
+                      Diagnósticos ({vehiculoDetalle.diagnosticos.length})
+                      <Lock className="h-3 w-3 text-amber-600" />
+                      <span className="text-[10px] font-normal text-amber-700">
+                        Solo taller
+                      </span>
+                    </h4>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setDiagEditando(null)
+                        setNuevoDiag({
+                          titulo: '',
+                          sintoma: '',
+                          pruebasRealizadas: '',
+                          resultadoPrueba: '',
+                          diagnostico: '',
+                          solucion: '',
+                          resultadoFinal: '',
+                          estado: 'En diagnóstico',
+                          kilometraje: vehiculoDetalle.kilometraje?.toString() || '',
+                          fecha: new Date().toISOString().split('T')[0],
+                        })
+                        setPaso('diagnostico-nuevo')
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Nuevo diagnóstico
+                    </Button>
+                  </div>
+
+                  {vehiculoDetalle.diagnosticos.length === 0 ? (
+                    <Card className="border-dashed">
+                      <CardContent className="flex flex-col items-center gap-2 p-6 text-center text-sm text-muted-foreground">
+                        <Stethoscope className="h-8 w-8 opacity-40" />
+                        <span>Aún no hay diagnósticos registrados.</span>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <ol className="max-h-[40vh] space-y-2 overflow-y-auto pr-1">
+                      {vehiculoDetalle.diagnosticos.map((d) => {
+                        const estadoColor: Record<string, string> = {
+                          'En diagnóstico': 'bg-amber-100 text-amber-800',
+                          'Resuelto': 'bg-emerald-100 text-emerald-800',
+                          'Pendiente repuesto': 'bg-blue-100 text-blue-800',
+                          'Sin solución': 'bg-red-100 text-red-800',
+                        }
+                        return (
+                          <li
+                            key={d.id}
+                            className="rounded-lg border border-border/60 bg-card p-3"
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-sm font-semibold">{d.titulo}</span>
+                                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${estadoColor[d.estado] || 'bg-muted text-muted-foreground'}`}>
+                                    {d.estado}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  <span className="font-semibold">Síntoma:</span> {d.sintoma}
+                                </p>
+                                {d.diagnostico && (
+                                  <p className="mt-1 text-xs">
+                                    <span className="font-semibold text-muted-foreground">Diagnóstico:</span> {d.diagnostico}
+                                  </p>
+                                )}
+                                {d.solucion && (
+                                  <p className="mt-1 text-xs">
+                                    <span className="font-semibold text-emerald-600">Solución:</span> {d.solucion}
+                                  </p>
+                                )}
+                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                  {formatFecha(d.fecha)}
+                                  {d.kilometraje != null && ` · ${d.kilometraje.toLocaleString('es-AR')} km`}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => iniciarEditarDiag(d)}
+                                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-primary"
+                                title="Ver/editar detalle"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </li>
+                        )
+                      })}
+                    </ol>
                   )}
                 </div>
 
@@ -2353,6 +2946,719 @@ export function AdminPanel({
             )}
           </div>
         )}
+
+        {/* PASO 8: ESTADÍSTICAS */}
+        {paso === 'estadisticas' && authToken && (
+          <div className="space-y-4 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Estadísticas del taller
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Resumen general de actividad e ingresos (solo para el taller).
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaso('lista')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver
+              </Button>
+            </div>
+
+            {cargandoEstadisticas ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : estadisticas ? (
+              <div className="max-h-[65vh] space-y-4 overflow-y-auto pr-1">
+                {/* Tarjetas principales */}
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  <StatCard
+                    icon={Car}
+                    label="Vehículos"
+                    value={String(estadisticas.totales.vehiculos)}
+                    color="bg-blue-500/10 text-blue-600"
+                  />
+                  <StatCard
+                    icon={Users}
+                    label="Clientes"
+                    value={String(estadisticas.totales.clientes)}
+                    color="bg-purple-500/10 text-purple-600"
+                  />
+                  <StatCard
+                    icon={Wrench}
+                    label="Trabajos totales"
+                    value={String(estadisticas.totales.trabajos)}
+                    color="bg-emerald-500/10 text-emerald-600"
+                  />
+                  <StatCard
+                    icon={Wallet}
+                    label="Ingresos totales"
+                    value={formatPrecio(estadisticas.totales.ingresosTotales)}
+                    color="bg-amber-500/10 text-amber-600"
+                    small
+                  />
+                </div>
+
+                {/* Tarjetas del mes con variación */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Trabajos este mes
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-2xl font-bold">
+                        {estadisticas.totales.trabajosMes}
+                      </p>
+                      {estadisticas.totales.variacionTrabajos !== 0 && (
+                        <span
+                          className={`flex items-center gap-0.5 text-xs font-medium ${
+                            estadisticas.totales.variacionTrabajos > 0
+                              ? 'text-emerald-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {estadisticas.totales.variacionTrabajos > 0 ? (
+                            <TrendingUp className="h-3 w-3" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3" />
+                          )}
+                          {Math.abs(estadisticas.totales.variacionTrabajos)}% vs mes anterior
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Ingresos este mes
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-2xl font-bold">
+                        {formatPrecio(estadisticas.totales.ingresosMes)}
+                      </p>
+                      {estadisticas.totales.variacionIngresos !== 0 && (
+                        <span
+                          className={`flex items-center gap-0.5 text-xs font-medium ${
+                            estadisticas.totales.variacionIngresos > 0
+                              ? 'text-emerald-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {estadisticas.totales.variacionIngresos > 0 ? (
+                            <TrendingUp className="h-3 w-3" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3" />
+                          )}
+                          {Math.abs(estadisticas.totales.variacionIngresos)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gráfico de barras: trabajos por mes */}
+                <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                  <h4 className="mb-3 text-sm font-semibold">
+                    Trabajos por mes (últimos 6 meses)
+                  </h4>
+                  <div className="flex h-32 items-end justify-around gap-2">
+                    {estadisticas.trabajosPorMes.map((m, i) => {
+                      const max = Math.max(
+                        ...estadisticas.trabajosPorMes.map((x) => x.cantidad),
+                        1,
+                      )
+                      const altura = (m.cantidad / max) * 100
+                      return (
+                        <div
+                          key={i}
+                          className="flex flex-1 flex-col items-center gap-1"
+                        >
+                          <span className="text-xs font-bold">
+                            {m.cantidad}
+                          </span>
+                          <div
+                            className="w-full rounded-t bg-primary transition-all"
+                            style={{ height: `${Math.max(altura, 4)}%` }}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            {m.mes}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Ingresos por mes */}
+                <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                  <h4 className="mb-3 text-sm font-semibold">
+                    Ingresos por mes (últimos 6 meses)
+                  </h4>
+                  <div className="flex h-32 items-end justify-around gap-2">
+                    {estadisticas.trabajosPorMes.map((m, i) => {
+                      const max = Math.max(
+                        ...estadisticas.trabajosPorMes.map((x) => x.ingresos),
+                        1,
+                      )
+                      const altura = (m.ingresos / max) * 100
+                      return (
+                        <div
+                          key={i}
+                          className="flex flex-1 flex-col items-center gap-1"
+                        >
+                          <span className="text-[10px] font-bold">
+                            {m.ingresos > 0
+                              ? formatPrecio(m.ingresos).replace(/\s?\$?/, '')
+                              : '0'}
+                          </span>
+                          <div
+                            className="w-full rounded-t bg-emerald-500 transition-all"
+                            style={{ height: `${Math.max(altura, 4)}%` }}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            {m.mes}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Estado de trabajos */}
+                <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                  <h4 className="mb-3 text-sm font-semibold">
+                    Trabajos por estado
+                  </h4>
+                  <div className="space-y-2">
+                    {estadisticas.trabajosPorEstado.map((t) => {
+                      const total = estadisticas.trabajosPorEstado.reduce(
+                        (acc, x) => acc + x.cantidad,
+                        0,
+                      )
+                      const pct =
+                        total > 0
+                          ? Math.round((t.cantidad / total) * 100)
+                          : 0
+                      const color =
+                        t.estado === 'Completado'
+                          ? 'bg-emerald-500'
+                          : t.estado === 'En proceso'
+                            ? 'bg-amber-500'
+                            : 'bg-zinc-400'
+                      return (
+                        <div key={t.estado}>
+                          <div className="flex items-center justify-between text-xs">
+                            <span>{t.estado}</span>
+                            <span className="font-medium">
+                              {t.cantidad} ({pct}%)
+                            </span>
+                          </div>
+                          <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={`h-full ${color}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Servicios más realizados */}
+                {estadisticas.serviciosMasRealizados.length > 0 && (
+                  <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                    <h4 className="mb-3 text-sm font-semibold">
+                      Servicios más realizados
+                    </h4>
+                    <div className="space-y-2">
+                      {estadisticas.serviciosMasRealizados.map((s, i) => {
+                        const max = Math.max(
+                          ...estadisticas.serviciosMasRealizados.map(
+                            (x) => x.cantidad,
+                          ),
+                        )
+                        const pct = (s.cantidad / max) * 100
+                        return (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="w-5 text-xs font-bold text-muted-foreground">
+                              {i + 1}.
+                            </span>
+                            <span className="flex-1 truncate text-xs">
+                              {s.nombre}
+                            </span>
+                            <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full bg-primary"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="w-8 text-right text-xs font-bold">
+                              {s.cantidad}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trabajos más realizados (por título) */}
+                {estadisticas.titulosMasUsados.length > 0 && (
+                  <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                    <h4 className="mb-3 text-sm font-semibold">
+                      Trabajos más realizados (por título)
+                    </h4>
+                    <div className="space-y-2">
+                      {estadisticas.titulosMasUsados.map((t, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between text-xs"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="font-bold text-muted-foreground">
+                              {i + 1}.
+                            </span>
+                            {t.titulo}
+                          </span>
+                          <span className="font-bold">{t.cantidad}x</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vencimientos y recordatorios */}
+                <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                  <h4 className="mb-3 text-sm font-semibold">
+                    Vencimientos y recordatorios pendientes
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg bg-red-50 p-2 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-red-600">
+                        VTV vencida
+                      </p>
+                      <p className="text-xl font-bold text-red-700">
+                        {estadisticas.vencimientos.vtvVencida}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-amber-50 p-2 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-amber-600">
+                        VTV por vencer
+                      </p>
+                      <p className="text-xl font-bold text-amber-700">
+                        {estadisticas.vencimientos.vtvProxima}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-red-50 p-2 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-red-600">
+                        GNC vencida
+                      </p>
+                      <p className="text-xl font-bold text-red-700">
+                        {estadisticas.vencimientos.gncVencida}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-amber-50 p-2 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-amber-600">
+                        GNC por vencer
+                      </p>
+                      <p className="text-xl font-bold text-amber-700">
+                        {estadisticas.vencimientos.gncProxima}
+                      </p>
+                    </div>
+                    <div className="col-span-2 rounded-lg bg-primary/10 p-2 text-center sm:col-span-1">
+                      <p className="text-[10px] uppercase tracking-wider text-primary">
+                        Recordatorios pendientes
+                      </p>
+                      <p className="text-xl font-bold text-primary">
+                        {estadisticas.vencimientos.recordatoriosPendientes}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Totales del año */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Trabajos del año
+                    </p>
+                    <p className="mt-1 text-2xl font-bold">
+                      {estadisticas.totales.trabajosAnio}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border-2 border-border/60 bg-card p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Ingresos del año
+                    </p>
+                    <p className="mt-1 text-2xl font-bold">
+                      {formatPrecio(estadisticas.totales.ingresosAnio)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="border-dashed">
+                <CardContent className="p-8 text-center text-sm text-muted-foreground">
+                  No se pudieron cargar las estadísticas.
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* PASO 9: NUEVO/EDITAR DIAGNÓSTICO */}
+        {(paso === 'diagnostico-nuevo' || paso === 'diagnostico-editar') && authToken && vehiculoDetalle && (
+          <form onSubmit={guardarDiagnostico} className="space-y-4 py-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDiagEditando(null)
+                setPaso('detalle')
+              }}
+              className="mb-2"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver al detalle
+            </Button>
+
+            <div className="rounded-lg bg-primary/5 p-3 text-sm">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                {diagEditando ? 'Editando diagnóstico de' : 'Nuevo diagnóstico para'}
+              </p>
+              <span className="font-semibold">
+                {vehiculoDetalle.marca} {vehiculoDetalle.modelo}
+              </span>
+              <span className="ml-2 font-mono">{vehiculoDetalle.patente}</span>
+              <p className="mt-1 text-xs text-muted-foreground">
+                🔒 Solo visible para el taller
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="d-titulo">Título *</Label>
+                <Input
+                  id="d-titulo"
+                  value={nuevoDiag.titulo}
+                  onChange={(e) => setNuevoDiag((nd) => ({ ...nd, titulo: e.target.value }))}
+                  placeholder="Ej: Ruido al frenar / Falla en ralenti / No arranca"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Estado</Label>
+                <Select
+                  value={nuevoDiag.estado}
+                  onValueChange={(v) => setNuevoDiag((nd) => ({ ...nd, estado: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="En diagnóstico">En diagnóstico</SelectItem>
+                    <SelectItem value="Resuelto">Resuelto</SelectItem>
+                    <SelectItem value="Pendiente repuesto">Pendiente repuesto</SelectItem>
+                    <SelectItem value="Sin solución">Sin solución</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="d-fecha">Fecha</Label>
+                <Input
+                  id="d-fecha"
+                  type="date"
+                  value={nuevoDiag.fecha}
+                  onChange={(e) => setNuevoDiag((nd) => ({ ...nd, fecha: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="d-km">Kilometraje (opcional)</Label>
+                <Input
+                  id="d-km"
+                  type="number"
+                  min="0"
+                  value={nuevoDiag.kilometraje}
+                  onChange={(e) => setNuevoDiag((nd) => ({ ...nd, kilometraje: e.target.value }))}
+                  placeholder="Ej: 95000"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="d-sintoma" className="flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                Síntoma informado *
+              </Label>
+              <Textarea
+                id="d-sintoma"
+                value={nuevoDiag.sintoma}
+                onChange={(e) => setNuevoDiag((nd) => ({ ...nd, sintoma: e.target.value }))}
+                placeholder="Describí el síntoma que reporta el cliente o que detectaste. Ej: 'El cliente reporta ruido metálico al frenar desde hace 2 semanas, principalmente al frenar de alta velocidad.'"
+                rows={3}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="d-pruebas" className="flex items-center gap-1.5">
+                <Search className="h-3.5 w-3.5 text-blue-500" />
+                Pruebas realizadas
+              </Label>
+              <Textarea
+                id="d-pruebas"
+                value={nuevoDiag.pruebasRealizadas}
+                onChange={(e) => setNuevoDiag((nd) => ({ ...nd, pruebasRealizadas: e.target.value }))}
+                placeholder="Ej: 'Inspección visual de pastillas y discos. Medición de espesor de pastilla. Prueba de frenado en banco. Diagnóstico computarizado ABS.'"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="d-resultado" className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-purple-500" />
+                Resultado de las pruebas
+              </Label>
+              <Textarea
+                id="d-resultado"
+                value={nuevoDiag.resultadoPrueba}
+                onChange={(e) => setNuevoDiag((nd) => ({ ...nd, resultadoPrueba: e.target.value }))}
+                placeholder="Ej: 'Pastillas delanteras con 2mm de espesor (límite 3mm). Discos con surcos profundos. Sin códigos de falla en ABS.'"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="d-diag" className="flex items-center gap-1.5">
+                <Stethoscope className="h-3.5 w-3.5 text-red-500" />
+                Diagnóstico
+              </Label>
+              <Textarea
+                id="d-diag"
+                value={nuevoDiag.diagnostico}
+                onChange={(e) => setNuevoDiag((nd) => ({ ...nd, diagnostico: e.target.value }))}
+                placeholder="Ej: 'Pastillas de freno delanteras agotadas y discos dañados por desgaste excesivo. Requiere reemplazo de ambas pastillas y rectificación/cambio de discos.'"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="d-solucion" className="flex items-center gap-1.5">
+                <Wrench className="h-3.5 w-3.5 text-emerald-500" />
+                Solución aplicada
+              </Label>
+              <Textarea
+                id="d-solucion"
+                value={nuevoDiag.solucion}
+                onChange={(e) => setNuevoDiag((nd) => ({ ...nd, solucion: e.target.value }))}
+                placeholder="Ej: 'Se reemplazaron pastillas delanteras (Bosch) y se rectificaron los discos. Se purgó el sistema de frenos.'"
+                rows={3}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="d-final" className="flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                Resultado final
+              </Label>
+              <Textarea
+                id="d-final"
+                value={nuevoDiag.resultadoFinal}
+                onChange={(e) => setNuevoDiag((nd) => ({ ...nd, resultadoFinal: e.target.value }))}
+                placeholder="Ej: 'Vehículo frenando correctamente. Cliente conforma. Se recomienda revisión en 10.000 km.'"
+                rows={2}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDiagEditando(null)
+                  setPaso('detalle')
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={guardandoDiag}>
+                {guardandoDiag ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  diagEditando ? 'Guardar cambios' : 'Crear diagnóstico'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+
+        {/* PASO 10: BÚSQUEDA GLOBAL DE SÍNTOMAS */}
+        {paso === 'buscar-sintomas' && authToken && (
+          <div className="space-y-4 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <Search className="h-5 w-5 text-primary" />
+                  Buscar síntomas
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Busca en todos los diagnósticos cargados. Encuentra casos
+                  similares en cualquier vehículo.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPaso('lista')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver
+              </Button>
+            </div>
+
+            <form onSubmit={buscarSintomas} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={busquedaSintoma}
+                  onChange={(e) => setBusquedaSintoma(e.target.value)}
+                  placeholder="Ej: ruido al frenar / no arranca / pierde agua / falla en ralenti..."
+                  className="pl-10"
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" disabled={buscando}>
+                {buscando ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Buscando...
+                  </>
+                ) : (
+                  'Buscar'
+                )}
+              </Button>
+            </form>
+
+            {/* Sugerencias de búsqueda rápida */}
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-xs text-muted-foreground">Búsquedas rápidas:</span>
+              {['ruido', 'freno', 'no arranca', 'agua', 'aceite', 'luz', 'calentamiento'].map((sug) => (
+                <button
+                  key={sug}
+                  onClick={() => {
+                    setBusquedaSintoma(sug)
+                    setTimeout(() => {
+                      const form = document.querySelector('form')
+                      form?.requestSubmit()
+                    }, 100)
+                  }}
+                  className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                >
+                  {sug}
+                </button>
+              ))}
+            </div>
+
+            {/* Resultados */}
+            {buscando ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : busquedaRealizada && resultadosBusqueda.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="p-8 text-center">
+                  <Search className="mx-auto mb-2 h-10 w-10 text-muted-foreground/50" />
+                  <p className="text-sm font-medium">Sin resultados</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    No encontramos diagnósticos con "{busquedaSintoma}".
+                    Probá con otras palabras.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : resultadosBusqueda.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  {resultadosBusqueda.length} resultado(s) encontrado(s) para "{busquedaSintoma}"
+                </p>
+                <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+                  {resultadosBusqueda.map((r) => {
+                    const estadoColor: Record<string, string> = {
+                      'En diagnóstico': 'bg-amber-100 text-amber-800',
+                      'Resuelto': 'bg-emerald-100 text-emerald-800',
+                      'Pendiente repuesto': 'bg-blue-100 text-blue-800',
+                      'Sin solución': 'bg-red-100 text-red-800',
+                    }
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          void verDetalle({
+                            id: r.vehiculo.id,
+                            marca: r.vehiculo.marca,
+                            modelo: r.vehiculo.modelo,
+                            anio: r.vehiculo.anio,
+                            patente: r.vehiculo.patente,
+                            tipo: '',
+                            cliente: { nombre: r.cliente.nombre, telefono: '' },
+                            _count: { trabajos: 0 },
+                          })
+                        }}
+                        className="block w-full rounded-lg border border-border/60 bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold">{r.titulo}</span>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${estadoColor[r.estado] || 'bg-muted text-muted-foreground'}`}>
+                                {r.estado}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              <span className="font-semibold">Vehículo:</span> {r.vehiculo.marca} {r.vehiculo.modelo} ({r.vehiculo.patente})
+                              <span className="ml-2">· {r.cliente.nombre}</span>
+                            </p>
+                            <p className="mt-1 text-xs">
+                              <span className="font-semibold text-muted-foreground">Síntoma:</span>{' '}
+                              <span className="italic">{r.sintoma}</span>
+                            </p>
+                            {r.diagnostico && (
+                              <p className="mt-1 text-xs">
+                                <span className="font-semibold text-red-600">Diagnóstico:</span> {r.diagnostico}
+                              </p>
+                            )}
+                            {r.solucion && (
+                              <p className="mt-1 text-xs">
+                                <span className="font-semibold text-emerald-600">Solución:</span> {r.solucion}
+                              </p>
+                            )}
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                              <span>{formatFecha(r.fecha)}</span>
+                              {r.kilometraje != null && <span>· {r.kilometraje.toLocaleString('es-AR')} km</span>}
+                              <span>· Encontrado en: {r.camposEncontrados.join(', ')}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -2399,6 +3705,32 @@ function AdminVencimientoCard({
       </p>
       <p className="text-sm font-bold">{formatFecha(fecha)}</p>
       <p className="mt-1 text-xs font-medium">{texto}</p>
+    </div>
+  )
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  color,
+  small,
+}: {
+  icon: typeof Car
+  label: string
+  value: string
+  color: string
+  small?: boolean
+}) {
+  return (
+    <div className="rounded-lg border-2 border-border/60 bg-card p-3">
+      <div className={`mb-1 flex h-8 w-8 items-center justify-center rounded-md ${color}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className={`font-bold ${small ? 'text-sm' : 'text-xl'}`}>{value}</p>
     </div>
   )
 }

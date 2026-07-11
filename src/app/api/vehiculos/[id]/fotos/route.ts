@@ -12,7 +12,7 @@ function verificarPin(req: NextRequest): boolean {
 }
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
-const MAX_FOTOS = 8 // máximo de fotos por vehículo
+const MAX_FOTOS_POR_CATEGORIA = 8 // máximo de fotos por categoría (hasta 32 totales)
 const EXTENSIONES_PERMITIDAS = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 
 // POST: subir una foto para un vehículo (solo admin)
@@ -35,24 +35,36 @@ export async function POST(
       )
     }
 
-    const cantidadFotos = await db.fotoVehiculo.count({
-      where: { vehiculoId: id },
-    })
-    if (cantidadFotos >= MAX_FOTOS) {
-      return NextResponse.json(
-        { error: `Máximo ${MAX_FOTOS} fotos por vehículo` },
-        { status: 400 },
-      )
-    }
-
     const formData = await req.formData()
     const file = formData.get('foto') as File | null
     const descripcion = (formData.get('descripcion') as string | null) || ''
     const esPrivada = formData.get('esPrivada') === 'true'
+    const categoriaRaw = (formData.get('categoria') as string | null) || 'general'
+    const categoriasValidas = ['general', 'dano', 'repuesto', 'trabajo_terminado']
+    const categoria = categoriasValidas.includes(categoriaRaw) ? categoriaRaw : 'general'
 
     if (!file) {
       return NextResponse.json(
         { error: 'No se recibió la foto' },
+        { status: 400 },
+      )
+    }
+
+    // Validar límite por categoría (8 fotos por categoría, no total)
+    const cantidadEnCategoria = await db.fotoVehiculo.count({
+      where: { vehiculoId: id, categoria },
+    })
+    if (cantidadEnCategoria >= MAX_FOTOS_POR_CATEGORIA) {
+      const nombresCategorias: Record<string, string> = {
+        general: 'general',
+        dano: 'de daños',
+        repuesto: 'de repuestos',
+        trabajo_terminado: 'de trabajo terminado',
+      }
+      return NextResponse.json(
+        {
+          error: `Máximo ${MAX_FOTOS_POR_CATEGORIA} fotos en la categoría ${nombresCategorias[categoria]}. Eliminá alguna para subir otra.`,
+        },
         { status: 400 },
       )
     }
@@ -89,6 +101,7 @@ export async function POST(
         url,
         descripcion: descripcion || null,
         esPrivada,
+        categoria,
       },
     })
 

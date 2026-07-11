@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Wrench, Lock, MapPin, Phone, Clock } from 'lucide-react'
+import { Lock, MapPin, Phone, Clock } from 'lucide-react'
 import { AdminPanel } from './AdminPanel'
 
 const WHATSAPP = '2235941522'
@@ -16,20 +16,12 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-3 lg:grid-cols-4">
           {/* Marca */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Wrench className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white">
-                  AutoSync
-                </p>
-                <p className="text-[10px] uppercase tracking-widest text-zinc-500">
-                  Mar del Plata · Buenos Aires
-                </p>
-              </div>
-            </div>
-            <p className="mt-4 max-w-md text-sm text-zinc-400">
+            <img
+              src="/logo-autosync-light.png"
+              alt="AutoSync - Centro Integral Automotriz"
+              className="mb-4 h-14 w-auto"
+            />
+            <p className="max-w-md text-sm text-zinc-400">
               Taller mecánico en Mar del Plata. Servicio automotor integral
               con garantía escrita y atención personalizada.
             </p>

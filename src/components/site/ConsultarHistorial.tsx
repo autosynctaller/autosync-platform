@@ -38,6 +38,7 @@ import {
   Edit,
   Save,
   FileDown,
+  MessageSquare,
 } from 'lucide-react'
 import { generarPDFHistorial } from '@/lib/pdf-historial'
 
@@ -104,6 +105,11 @@ export function ConsultarHistorial() {
     notas: '',
   })
 
+  // Nota rápida (botón directo)
+  const [mostrarNotaRapida, setMostrarNotaRapida] = useState(false)
+  const [notaRapida, setNotaRapida] = useState('')
+  const [guardandoNotaRapida, setGuardandoNotaRapida] = useState(false)
+
   const abrirEdicion = () => {
     if (!vehiculo) return
     setFormEdicion({
@@ -118,6 +124,24 @@ export function ConsultarHistorial() {
   const guardarEdicionCliente = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!vehiculo) return
+
+    // Validación del lado del cliente: km solo puede aumentar
+    const kmNuevo = formEdicion.kilometraje
+      ? Number(formEdicion.kilometraje)
+      : null
+    if (
+      kmNuevo !== null &&
+      vehiculo.kilometraje !== null &&
+      kmNuevo < vehiculo.kilometraje
+    ) {
+      toast({
+        title: 'No podés reducir el kilometraje',
+        description: `El actual es ${vehiculo.kilometraje.toLocaleString('es-AR')} km. Solo podés aumentarlo, no bajarlo.`,
+        variant: 'destructive',
+      })
+      return
+    }
+
     setGuardandoEdicion(true)
     try {
       const res = await fetch(`/api/vehiculos/${vehiculo.id}`, {
@@ -126,9 +150,7 @@ export function ConsultarHistorial() {
         body: JSON.stringify({
           cliente: true,
           color: formEdicion.color || null,
-          kilometraje: formEdicion.kilometraje
-            ? Number(formEdicion.kilometraje)
-            : null,
+          kilometraje: kmNuevo,
           notas: formEdicion.notas || null,
         }),
       })
@@ -149,6 +171,39 @@ export function ConsultarHistorial() {
       })
     } finally {
       setGuardandoEdicion(false)
+    }
+  }
+
+  const guardarNotaRapida = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!vehiculo) return
+    setGuardandoNotaRapida(true)
+    try {
+      const res = await fetch(`/api/vehiculos/${vehiculo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cliente: true,
+          notas: notaRapida || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      setVehiculo({ ...vehiculo, ...data.vehiculo })
+      toast({
+        title: 'Nota enviada',
+        description: 'El taller fue notificado de tu nota.',
+      })
+      setMostrarNotaRapida(false)
+    } catch (err: unknown) {
+      toast({
+        title: 'No se pudo guardar',
+        description:
+          err instanceof Error ? err.message : 'Intentá de nuevo.',
+        variant: 'destructive',
+      })
+    } finally {
+      setGuardandoNotaRapida(false)
     }
   }
 
@@ -440,6 +495,16 @@ export function ConsultarHistorial() {
                     <Edit className="mr-2 h-4 w-4" />
                     Editar mi vehículo
                   </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setNotaRapida(vehiculo?.notas || '')
+                      setMostrarNotaRapida(true)
+                    }}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Agregar nota
+                  </Button>
                 </div>
 
                 {/* Timeline de trabajos */}
@@ -603,13 +668,18 @@ export function ConsultarHistorial() {
               <Input
                 id="c-km"
                 type="number"
-                min="0"
+                min={vehiculo?.kilometraje ?? 0}
                 value={formEdicion.kilometraje}
                 onChange={(e) =>
                   setFormEdicion((f) => ({ ...f, kilometraje: e.target.value }))
                 }
                 placeholder="Ej: 95000"
               />
+              {vehiculo?.kilometraje != null && (
+                <p className="text-xs text-amber-600">
+                  ℹ️ Solo podés <strong>aumentar</strong> el kilometraje (actual: {vehiculo.kilometraje.toLocaleString('es-AR')} km). No se puede reducir.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -643,6 +713,64 @@ export function ConsultarHistorial() {
                   <>
                     <Save className="mr-2 h-4 w-4" />
                     Guardar cambios
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de nota rápida (cliente) */}
+      <Dialog open={mostrarNotaRapida} onOpenChange={setMostrarNotaRapida}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              Enviar nota al taller
+            </DialogTitle>
+            <DialogDescription>
+              Escribí una nota para que el taller la lea. Avisános si hay algún
+              ruido, falla, o algo que debamos revisar en tu{' '}
+              {vehiculo?.marca} {vehiculo?.modelo}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={guardarNotaRapida} className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="nota-rapida">Tu mensaje para el taller</Label>
+              <Textarea
+                id="nota-rapida"
+                value={notaRapida}
+                onChange={(e) => setNotaRapida(e.target.value)}
+                placeholder="Ej: Hace un ruido raro cuando freno. También quería saber si puedo llevarlo el jueves."
+                rows={5}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                El taller va a ser notificado de tu mensaje. Podés actualizar
+                esta nota cuando quieras.
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMostrarNotaRapida(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={guardandoNotaRapida}>
+                {guardandoNotaRapida ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Enviar nota
                   </>
                 )}
               </Button>

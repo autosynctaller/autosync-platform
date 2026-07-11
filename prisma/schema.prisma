@@ -40,6 +40,7 @@ model Vehiculo {
   trabajos               Trabajo[]
   fotos                  FotoVehiculo[]
   documentos             DocumentoVehiculo[]
+  diagnosticos           Diagnostico[]
   createdAt              DateTime          @default(now())
 }
 
@@ -82,6 +83,7 @@ model FotoVehiculo {
   url         String   // Ruta relativa /uploads/vehiculos/...
   descripcion String?
   esPrivada   Boolean  @default(false) // Si es true, solo la ve el admin
+  categoria   String   @default("general") // general, dano, repuesto, trabajo_terminado
   createdAt   DateTime @default(now())
 }
 
@@ -95,4 +97,38 @@ model DocumentoVehiculo {
   tamaño      Int      // Tamaño en bytes
   descripcion String?
   createdAt   DateTime @default(now())
+}
+
+// Cronograma de services por marca/modelo (solo admin lo ve y gestiona)
+// Si modelo es "Genérico", aplica a todos los modelos de esa marca
+model CronogramaService {
+  id          String   @id @default(cuid())
+  marca       String   // Ej: Toyota, Ford, VW, Chevrolet, etc.
+  modelo      String   // Ej: Corolla, Hilux, o "Genérico" para toda la marca
+  kilometraje Int      // Cada cuántos km se hace el service (ej: 10000)
+  items       String   // Lista de items a revisar, separados por salto de línea
+  notas       String?  // Observaciones adicionales del fabricante
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Diagnóstico técnico de un vehículo (solo admin lo ve)
+// Permite registrar síntomas, pruebas, diagnóstico y solución
+model Diagnostico {
+  id               String   @id @default(cuid())
+  vehiculoId       String
+  vehiculo         Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  titulo           String   // Título corto del problema (ej: "Ruido al frenar")
+  sintoma          String   // Síntoma informado por el cliente o detectado
+  pruebasRealizadas String? // Pruebas realizadas para diagnosticar
+  resultadoPrueba  String?  // Resultado de las pruebas
+  diagnostico      String?  // Diagnóstico técnico final
+  solucion         String?  // Solución aplicada
+  resultadoFinal   String?  // Resultado después de la solución
+  estado           String   @default("En diagnóstico") // En diagnóstico, Resuelto, Pendiente repuesto, Sin solución
+  kilometraje      Int?     // KM del vehículo al momento del diagnóstico
+  fecha            DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

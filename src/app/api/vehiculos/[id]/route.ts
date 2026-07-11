@@ -29,6 +29,9 @@ export async function GET(
         documentos: {
           orderBy: { createdAt: 'desc' },
         },
+        diagnosticos: {
+          orderBy: { fecha: 'desc' },
+        },
       },
     })
 
@@ -82,9 +85,18 @@ export async function PATCH(
     if (esCliente && !esAdmin) {
       if (body.color !== undefined) datosCliente.color = body.color || null
       if (body.kilometraje !== undefined) {
-        datosCliente.kilometraje = body.kilometraje
-          ? Number(body.kilometraje)
-          : null
+        const kmNuevo = body.kilometraje ? Number(body.kilometraje) : null
+        // Validación: el cliente solo puede AUMENTAR el kilometraje, nunca reducirlo
+        // (para evitar inconsistencias en garantías y registros)
+        if (kmNuevo !== null && vehiculo.kilometraje !== null && kmNuevo < vehiculo.kilometraje) {
+          return NextResponse.json(
+            {
+              error: `No podés reducir el kilometraje. El actual es ${vehiculo.kilometraje.toLocaleString('es-AR')} km y solo podés aumentarlo.`,
+            },
+            { status: 400 },
+          )
+        }
+        datosCliente.kilometraje = kmNuevo
       }
       if (body.notas !== undefined) {
         datosCliente.notas = body.notas || null

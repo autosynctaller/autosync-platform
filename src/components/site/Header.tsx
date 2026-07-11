@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { Menu, Wrench, Phone } from 'lucide-react'
+import { Menu, Phone } from 'lucide-react'
 
 const WHATSAPP = '2235941522'
 
@@ -40,17 +40,11 @@ export function Header() {
           className="flex items-center gap-2"
           aria-label="Ir al inicio"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Wrench className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col items-start leading-tight">
-            <span className="text-sm font-bold tracking-tight">
-              AutoSync
-            </span>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Mar del Plata
-            </span>
-          </div>
+          <img
+            src="/logo-autosync-light.png"
+            alt="AutoSync - Centro Integral Automotriz"
+            className="h-10 w-auto sm:h-11"
+          />
         </button>
 
         {/* Navegación escritorio */}

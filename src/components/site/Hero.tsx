@@ -30,6 +30,12 @@ export function Hero() {
       <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col gap-6">
+            <img
+              src="/logo-autosync-dark.png"
+              alt="AutoSync - Centro Integral Automotriz"
+              className="h-12 w-auto max-w-[180px] object-contain sm:h-14"
+            />
+
             <Badge
               variant="outline"
               className="w-fit border-primary/40 bg-primary/10 text-primary-foreground"

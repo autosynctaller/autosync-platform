@@ -30,7 +30,8 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "AutoSync" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/favicon-autosync.png",
+    apple: "/favicon-autosync.png",
   },
   openGraph: {
     title: "AutoSync | Taller Mecánico en Mar del Plata",
