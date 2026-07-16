@@ -3,7 +3,20 @@
 Web completa para taller mecánico en Mar del Plata, Argentina.
 Construida con Next.js 16, TypeScript, Prisma (SQLite) y Tailwind CSS + shadcn/ui.
 
-## 🔧 Para arrancar el proyecto (si lo abrís en otro lado)
+## 🚀 Publicar en internet
+
+**Leé [DEPLOY.md](./DEPLOY.md)** para la guía completa de publicación con dominio .com.ar y mails automáticos.
+
+Resumen rápido:
+1. Crear cuentas gratis en GitHub, Vercel y Resend
+2. Subir el código a GitHub
+3. Conectar con Vercel (deploy automático)
+4. Configurar variables de entorno (ver `.env.example`)
+5. Comprar dominio .com.ar
+6. Conectar dominio a Vercel
+7. Verificar dominio en Resend para mails automáticos
+
+## 🔧 Para arrancar el proyecto (desarrollo local)
 
 ### Requisitos
 - Node.js 18+ o Bun instalado

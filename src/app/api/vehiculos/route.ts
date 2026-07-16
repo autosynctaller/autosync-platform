@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { enviarEmail, emailBienvenida } from '@/lib/email'
 
 // Normaliza una patente: AAA123 o AA123BB en mayúsculas sin espacios ni guiones
 function normalizarPatente(p: string): string {
@@ -152,6 +153,21 @@ export async function POST(req: NextRequest) {
       },
       include: { cliente: true },
     })
+
+    // Enviar email de bienvenida si el cliente tiene email
+    if (vehiculo.cliente.email) {
+      const { subject, html } = emailBienvenida({
+        nombreCliente: vehiculo.cliente.nombre,
+        marca: vehiculo.marca,
+        modelo: vehiculo.modelo,
+        patente: vehiculo.patente,
+      })
+      await enviarEmail({
+        to: vehiculo.cliente.email,
+        subject,
+        html,
+      })
+    }
 
     return NextResponse.json({ vehiculo }, { status: 201 })
   } catch (error) {
