@@ -1,0 +1,388 @@
+// AutoSync - Historial Digital Automotor
+// Schema multi-tenant: talleres, dueños y vehículos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USUARIOS ============
+
+enum RolUsuario {
+  SUPER_ADMIN
+  TALLER
+  DUENO
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  password      String       // hash bcrypt
+  rol           RolUsuario   @default(DUENO)
+  nombre        String
+  telefono      String?
+  creadoEn      DateTime     @default(now())
+  actualizadoEn DateTime     @updatedAt
+
+  // Relaciones
+  taller        Taller?
+  vehiculos     Vehiculo[]   // vehículos reclamados por este dueño
+  trabajos      Trabajo[]    // trabajos cargados por este taller
+  diagnosticos  Diagnostico[]
+  accesos       AccesoTallerVehiculo[]
+  sesiones      Sesion[]
+  notificaciones Notificacion[]
+}
+
+model Sesion {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token        String   @unique // JWT token
+  expires      DateTime
+  creadoEn     DateTime @default(now())
+}
+
+// ============ TALLERES ============
+
+enum PlanTaller {
+  GRATIS
+  PREMIUM
+}
+
+enum EstadoTaller {
+  PENDIENTE
+  ACTIVO
+  SUSPENDIDO
+  CANCELADO
+}
+
+model Taller {
+  id            String        @id @default(cuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nombre        String
+  slug          String        @unique // para URL: /taller/juan-mecanica
+  descripcion   String?
+  logo          String?
+  telefono      String
+  whatsapp      String?
+  email         String?
+  direccion     String?
+  ciudad        String?
+  provincia     String?
+  latitud       Float?
+  longitud      Float?
+  plan          PlanTaller    @default(GRATIS)
+  estado        EstadoTaller  @default(PENDIENTE)
+  verificado    Boolean       @default(false)
+  creadoEn      DateTime      @default(now())
+  actualizadoEn DateTime      @updatedAt
+
+  // Relaciones
+  trabajos      Trabajo[]
+  servicios     Servicio[]
+  diagnosticos  Diagnostico[]
+  fotos         FotoTrabajo[]
+  documentos    DocumentoVehiculo[]
+  accesos       AccesoTallerVehiculo[]
+  clientes      ClienteTaller[]
+  clientesVehiculos VehiculoTaller[]
+
+  @@index([slug])
+  @@index([estado])
+  @@index([ciudad])
+}
+
+// ============ VEHÍCULOS ============
+
+model Vehiculo {
+  id              String   @id @default(cuid())
+  patente         String   @unique
+  marca           String
+  modelo          String
+  anio            Int
+  color           String?
+  vin             String?   // cargado por el dueño
+  numeroMotor     String?   // cargado por el dueño
+  kilometraje     Int?
+  tipo            String   @default("Auto")
+  combustible     String?
+  notas           String?   // notas visibles del dueño
+  vtvVencimiento  DateTime?
+  gncVencimiento  DateTime?
+  
+  // Dueño (null hasta que alguien lo reclama)
+  ownerId         String?
+  owner           User?    @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  
+  // Verificación del dueño
+  verificado      Boolean  @default(false)
+  codigoVerificacion String? // 3 dígitos del DNI
+  
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
+
+  // Relaciones
+  trabajos        Trabajo[]
+  diagnosticos    Diagnostico[]
+  documentos      DocumentoVehiculo[]
+  accesosTaller   AccesoTallerVehiculo[]
+  talleres        VehiculoTaller[]
+  notificacionNotas NotificacionNota[]
+
+  @@index([patente])
+  @@index([ownerId])
+  @@index([marca, modelo])
+}
+
+// Relación muchos-a-muchos: qué talleres trabajaron en qué vehículo
+model VehiculoTaller {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  tallerId    String
+  primero     DateTime @default(now()) // primera vez que el taller tocó el vehículo
+  ultimo      DateTime @default(now()) // última vez
+  totalTrabajos Int    @default(0)
+
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  taller      Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+
+  @@unique([vehiculoId, tallerId])
+  @@index([tallerId])
+}
+
+// ============ TRABAJOS ============
+
+enum EstadoTrabajo {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADO
+  CANCELADO
+}
+
+model Trabajo {
+  id              String       @id @default(cuid())
+  vehiculoId      String
+  tallerId        String
+  vehiculo        Vehiculo     @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  taller          Taller       @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  
+  servicioId      String?
+  servicio        Servicio?    @relation(fields: [servicioId], references: [id])
+  
+  titulo          String
+  descripcion     String
+  precio          Float
+  estado          EstadoTrabajo @default(COMPLETADO)
+  fecha           DateTime     @default(now())
+  kilometraje     Int?
+  proximaRevision String?      // texto libre: "A los 90.000 km"
+  recordatorio    DateTime?    // fecha exacta de recordatorio
+  notasInternas   String?      // SOLO el taller que cargó las ve
+  
+  creadoEn        DateTime     @default(now())
+  actualizadoEn   DateTime     @updatedAt
+
+  // Fotos asociadas a ESTE trabajo (antes/después/repuesto/detalle)
+  fotos           FotoTrabajo[]
+
+  @@index([vehiculoId, fecha])
+  @@index([tallerId, fecha])
+  @@index([estado])
+  @@index([recordatorio])
+}
+
+// Fotos asociadas a un trabajo específico
+enum CategoriaFoto {
+  ANTES
+  DESPUES
+  REPUESTO
+  DETALLE
+  OTRO
+}
+
+model FotoTrabajo {
+  id          String         @id @default(cuid())
+  trabajoId   String
+  trabajo     Trabajo        @relation(fields: [trabajoId], references: [id], onDelete: Cascade)
+  tallerId    String
+  taller      Taller         @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  url         String
+  descripcion String?
+  categoria   CategoriaFoto  @default(DETALLE)
+  esPrivada   Boolean        @default(false) // si es true, solo el taller y el dueño la ven
+  creadoEn    DateTime       @default(now())
+
+  @@index([trabajoId])
+}
+
+// ============ DIAGNÓSTICOS ============
+
+enum EstadoDiagnostico {
+  EN_DIAGNOSTICO
+  RESUELTO
+  PENDIENTE_REPUESTO
+  SIN_SOLUCION
+}
+
+model Diagnostico {
+  id               String           @id @default(cuid())
+  vehiculoId       String
+  tallerId         String
+  vehiculo         Vehiculo         @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  taller           Taller           @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  
+  titulo           String
+  sintoma          String
+  pruebasRealizadas String?
+  resultadoPrueba  String?
+  diagnostico      String?
+  solucion         String?
+  resultadoFinal   String?
+  estado           EstadoDiagnostico @default(EN_DIAGNOSTICO)
+  kilometraje      Int?
+  fecha            DateTime         @default(now())
+  creadoEn         DateTime         @default(now())
+  actualizadoEn    DateTime         @updatedAt
+
+  @@index([vehiculoId, fecha])
+  @@index([tallerId])
+}
+
+// ============ DOCUMENTOS DEL VEHÍCULO ============
+
+model DocumentoVehiculo {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  tallerId    String
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  taller      Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  url         String
+  nombre      String
+  tipo        String   // MIME type
+  tamano      Int
+  descripcion String?
+  creadoEn    DateTime @default(now())
+
+  @@index([vehiculoId])
+}
+
+// ============ PERMISOS DE ACCESO ============
+
+enum EstadoAcceso {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  REVOCADO
+}
+
+// Permisos de un taller sobre un vehículo (para ver trabajos de otros talleres)
+model AccesoTallerVehiculo {
+  id                       String        @id @default(cuid())
+  tallerId                 String
+  vehiculoId               String
+  taller                   Taller        @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  vehiculo                 Vehiculo      @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  
+  puedeVerTrabajosDeOtros  Boolean       @default(false)
+  puedeVerFotosPrivadas    Boolean       @default(false)
+  puedeVerDocumentos       Boolean       @default(false)
+  
+  estado                   EstadoAcceso  @default(PENDIENTE)
+  solicitadoEn             DateTime      @default(now())
+  respondidoEn             DateTime?
+  
+  @@unique([tallerId, vehiculoId])
+  @@index([vehiculoId, estado])
+}
+
+// ============ SERVICIOS DEL TALLER ============
+
+model Servicio {
+  id          String   @id @default(cuid())
+  tallerId    String
+  taller      Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  nombre      String
+  descripcion String?
+  categoria   String?
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now())
+
+  trabajos    Trabajo[]
+
+  @@index([tallerId])
+}
+
+// ============ CLIENTES DEL TALLER ============
+
+model ClienteTaller {
+  id          String   @id @default(cuid())
+  tallerId    String
+  taller      Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  nombre      String
+  telefono    String
+  email       String?
+  dni         String?  // opcional
+  notas       String?
+  creadoEn    DateTime @default(now())
+
+  @@index([tallerId])
+}
+
+// ============ NOTIFICACIONES ============
+
+enum TipoNotificacion {
+  TRABAJO_CARGADO
+  ACCESO_SOLICITADO
+  ACCESO_RESPONDIDO
+  RECORDATORIO
+  VEHICULO_RECLAMADO
+  NOTA_CLIENTE
+}
+
+model Notificacion {
+  id          String           @id @default(cuid())
+  userId      String           // destinatario
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo        TipoNotificacion
+  titulo      String
+  mensaje     String
+  leida       Boolean          @default(false)
+  data        Json?            // datos adicionales
+  creadoEn    DateTime         @default(now())
+
+  @@index([userId, leida])
+}
+
+// Notas del dueño del vehículo (con timestamp para avisar al taller)
+model NotificacionNota {
+  id          String   @id @default(cuid())
+  vehiculoId  String
+  vehiculo    Vehiculo @relation(fields: [vehiculoId], references: [id], onDelete: Cascade)
+  nota        String
+  actualizadoEn DateTime @default(now())
+
+  @@index([vehiculoId])
+}
+
+// ============ CRONOGRAMAS (compartidos por toda la plataforma) ============
+
+model CronogramaService {
+  id          String   @id @default(cuid())
+  marca       String
+  modelo      String   // "Genérico" aplica a toda la marca
+  kilometraje Int
+  items       String   // items separados por salto de línea
+  notas       String?
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@index([marca, modelo])
+  @@index([marca, kilometraje])
+}
