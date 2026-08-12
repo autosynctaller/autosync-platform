@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/app/layout,_N_T_/app/dueno/layout,_N_T_/app/dueno/page,_N_T_/app/dueno"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/app/dueno/__PAGE__",
+    "/app/dueno",
+    "/app",
+    "/_index",
+    "/_head"
+  ]
+}

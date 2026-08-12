@@ -3,7 +3,31 @@
     "[project]/autosync-platform/src/app/_not-found/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ],
+    "[project]/autosync-platform/src/app/app/dueno/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/dueno/reclamar/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
     "[project]/autosync-platform/src/app/app/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/taller/diagnosticos/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/taller/estadisticas/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/taller/perfil/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/taller/servicios/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/taller/vehiculos/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/app/taller/vehiculos/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ],
     "[project]/autosync-platform/src/app/login/page": [

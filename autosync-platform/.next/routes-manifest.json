@@ -44,6 +44,14 @@
         "nxtPid": "nxtPid"
       },
       "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)/trabajos(?:/)?$"
+    },
+    {
+      "page": "/app/taller/vehiculos/[id]",
+      "regex": "^/app/taller/vehiculos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/app/taller/vehiculos/(?<nxtPid>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -90,6 +98,18 @@
       "namedRegex": "^/api/auth/register(?:/)?$"
     },
     {
+      "page": "/api/diagnosticos/buscar",
+      "regex": "^/api/diagnosticos/buscar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/diagnosticos/buscar(?:/)?$"
+    },
+    {
+      "page": "/api/estadisticas",
+      "regex": "^/api/estadisticas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/estadisticas(?:/)?$"
+    },
+    {
       "page": "/api/servicios",
       "regex": "^/api/servicios(?:/)?$",
       "routeKeys": {},
@@ -130,6 +150,48 @@
       "regex": "^/app(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/app(?:/)?$"
+    },
+    {
+      "page": "/app/dueno",
+      "regex": "^/app/dueno(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/dueno(?:/)?$"
+    },
+    {
+      "page": "/app/dueno/reclamar",
+      "regex": "^/app/dueno/reclamar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/dueno/reclamar(?:/)?$"
+    },
+    {
+      "page": "/app/taller/diagnosticos",
+      "regex": "^/app/taller/diagnosticos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/diagnosticos(?:/)?$"
+    },
+    {
+      "page": "/app/taller/estadisticas",
+      "regex": "^/app/taller/estadisticas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/estadisticas(?:/)?$"
+    },
+    {
+      "page": "/app/taller/perfil",
+      "regex": "^/app/taller/perfil(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/perfil(?:/)?$"
+    },
+    {
+      "page": "/app/taller/servicios",
+      "regex": "^/app/taller/servicios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/servicios(?:/)?$"
+    },
+    {
+      "page": "/app/taller/vehiculos",
+      "regex": "^/app/taller/vehiculos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/vehiculos(?:/)?$"
     },
     {
       "page": "/login",
