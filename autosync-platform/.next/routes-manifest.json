@@ -46,12 +46,28 @@
       "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)/trabajos(?:/)?$"
     },
     {
+      "page": "/app/dueno/vehiculos/[id]",
+      "regex": "^/app/dueno/vehiculos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/app/dueno/vehiculos/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/app/taller/vehiculos/[id]",
       "regex": "^/app/taller/vehiculos/([^/]+?)(?:/)?$",
       "routeKeys": {
         "nxtPid": "nxtPid"
       },
       "namedRegex": "^/app/taller/vehiculos/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/talleres/[slug]",
+      "regex": "^/talleres/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/talleres/(?<nxtPslug>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -96,6 +112,12 @@
       "regex": "^/api/auth/register(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/auth/register(?:/)?$"
+    },
+    {
+      "page": "/api/cronogramas",
+      "regex": "^/api/cronogramas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/cronogramas(?:/)?$"
     },
     {
       "page": "/api/diagnosticos/buscar",
@@ -198,6 +220,12 @@
       "regex": "^/login(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/talleres",
+      "regex": "^/talleres(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/talleres(?:/)?$"
     }
   ],
   "dataRoutes": [],

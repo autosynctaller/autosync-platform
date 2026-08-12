@@ -7,9 +7,14 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const ciudad = searchParams.get('ciudad')
     const q = searchParams.get('q')
+    const slug = searchParams.get('slug')
 
     const where: Record<string, unknown> = {
       estado: 'ACTIVO',
+    }
+
+    if (slug) {
+      where.slug = slug
     }
 
     if (ciudad) {

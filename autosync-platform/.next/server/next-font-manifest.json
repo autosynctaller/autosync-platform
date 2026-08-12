@@ -9,6 +9,9 @@
     "[project]/autosync-platform/src/app/app/dueno/reclamar/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ],
+    "[project]/autosync-platform/src/app/app/dueno/vehiculos/[id]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
     "[project]/autosync-platform/src/app/app/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ],
@@ -34,6 +37,12 @@
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ],
     "[project]/autosync-platform/src/app/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/talleres/[slug]/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
+    "[project]/autosync-platform/src/app/talleres/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ]
   },

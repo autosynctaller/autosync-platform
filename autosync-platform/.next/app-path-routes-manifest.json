@@ -5,6 +5,7 @@
   "/api/auth/logout/route": "/api/auth/logout",
   "/api/auth/me/route": "/api/auth/me",
   "/api/auth/register/route": "/api/auth/register",
+  "/api/cronogramas/route": "/api/cronogramas",
   "/api/diagnosticos/buscar/route": "/api/diagnosticos/buscar",
   "/api/estadisticas/route": "/api/estadisticas",
   "/api/servicios/route": "/api/servicios",
@@ -18,6 +19,7 @@
   "/api/vehiculos/route": "/api/vehiculos",
   "/app/dueno/page": "/app/dueno",
   "/app/dueno/reclamar/page": "/app/dueno/reclamar",
+  "/app/dueno/vehiculos/[id]/page": "/app/dueno/vehiculos/[id]",
   "/app/page": "/app",
   "/app/taller/diagnosticos/page": "/app/taller/diagnosticos",
   "/app/taller/estadisticas/page": "/app/taller/estadisticas",
@@ -26,5 +28,7 @@
   "/app/taller/vehiculos/[id]/page": "/app/taller/vehiculos/[id]",
   "/app/taller/vehiculos/page": "/app/taller/vehiculos",
   "/login/page": "/login",
-  "/page": "/"
+  "/page": "/",
+  "/talleres/[slug]/page": "/talleres/[slug]",
+  "/talleres/page": "/talleres"
 }

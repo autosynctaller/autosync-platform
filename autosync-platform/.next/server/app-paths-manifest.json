@@ -5,6 +5,7 @@
   "/api/auth/logout/route": "app/api/auth/logout/route.js",
   "/api/auth/me/route": "app/api/auth/me/route.js",
   "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/cronogramas/route": "app/api/cronogramas/route.js",
   "/api/diagnosticos/buscar/route": "app/api/diagnosticos/buscar/route.js",
   "/api/estadisticas/route": "app/api/estadisticas/route.js",
   "/api/servicios/route": "app/api/servicios/route.js",
@@ -18,6 +19,7 @@
   "/api/vehiculos/route": "app/api/vehiculos/route.js",
   "/app/dueno/page": "app/app/dueno/page.js",
   "/app/dueno/reclamar/page": "app/app/dueno/reclamar/page.js",
+  "/app/dueno/vehiculos/[id]/page": "app/app/dueno/vehiculos/[id]/page.js",
   "/app/page": "app/app/page.js",
   "/app/taller/diagnosticos/page": "app/app/taller/diagnosticos/page.js",
   "/app/taller/estadisticas/page": "app/app/taller/estadisticas/page.js",
@@ -26,5 +28,7 @@
   "/app/taller/vehiculos/[id]/page": "app/app/taller/vehiculos/[id]/page.js",
   "/app/taller/vehiculos/page": "app/app/taller/vehiculos/page.js",
   "/login/page": "app/login/page.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/talleres/[slug]/page": "app/talleres/[slug]/page.js",
+  "/talleres/page": "app/talleres/page.js"
 }

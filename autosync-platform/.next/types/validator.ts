@@ -65,6 +65,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/app/dueno/vehiculos/[id]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/app/dueno/vehiculos/[id]">> = Specific
+  const handler = {} as typeof import("../../src/app/app/dueno/vehiculos/[id]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/app/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/app">> = Specific
@@ -146,6 +155,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../src/app/talleres/[slug]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/talleres/[slug]">> = Specific
+  const handler = {} as typeof import("../../src/app/talleres/[slug]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/talleres/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/talleres">> = Specific
+  const handler = {} as typeof import("../../src/app/talleres/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../src/app/api/auth/login/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/login">> = Specific
@@ -177,6 +204,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/auth/register">> = Specific
   const handler = {} as typeof import("../../src/app/api/auth/register/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../src/app/api/cronogramas/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/cronogramas">> = Specific
+  const handler = {} as typeof import("../../src/app/api/cronogramas/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
