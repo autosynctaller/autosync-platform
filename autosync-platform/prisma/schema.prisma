@@ -31,9 +31,6 @@ model User {
   // Relaciones
   taller        Taller?
   vehiculos     Vehiculo[]   // vehículos reclamados por este dueño
-  trabajos      Trabajo[]    // trabajos cargados por este taller
-  diagnosticos  Diagnostico[]
-  accesos       AccesoTallerVehiculo[]
   sesiones      Sesion[]
   notificaciones Notificacion[]
 }
