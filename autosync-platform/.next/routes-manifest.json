@@ -20,7 +20,32 @@
     "afterFiles": [],
     "fallback": []
   },
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/api/trabajos/[id]/fotos",
+      "regex": "^/api/trabajos/([^/]+?)/fotos(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/trabajos/(?<nxtPid>[^/]+?)/fotos(?:/)?$"
+    },
+    {
+      "page": "/api/vehiculos/[id]",
+      "regex": "^/api/vehiculos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/vehiculos/[id]/trabajos",
+      "regex": "^/api/vehiculos/([^/]+?)/trabajos(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)/trabajos(?:/)?$"
+    }
+  ],
   "staticRoutes": [
     {
       "page": "/",
@@ -63,6 +88,42 @@
       "regex": "^/api/auth/register(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/auth/register(?:/)?$"
+    },
+    {
+      "page": "/api/servicios",
+      "regex": "^/api/servicios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/servicios(?:/)?$"
+    },
+    {
+      "page": "/api/talleres",
+      "regex": "^/api/talleres(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/talleres(?:/)?$"
+    },
+    {
+      "page": "/api/upload",
+      "regex": "^/api/upload(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/upload(?:/)?$"
+    },
+    {
+      "page": "/api/vehiculos",
+      "regex": "^/api/vehiculos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/vehiculos(?:/)?$"
+    },
+    {
+      "page": "/api/vehiculos/buscar",
+      "regex": "^/api/vehiculos/buscar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/vehiculos/buscar(?:/)?$"
+    },
+    {
+      "page": "/api/vehiculos/reclamar",
+      "regex": "^/api/vehiculos/reclamar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/vehiculos/reclamar(?:/)?$"
     },
     {
       "page": "/app",
