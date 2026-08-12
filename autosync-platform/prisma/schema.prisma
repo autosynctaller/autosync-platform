@@ -77,6 +77,17 @@ model Taller {
   plan          PlanTaller    @default(GRATIS)
   estado        EstadoTaller  @default(PENDIENTE)
   verificado    Boolean       @default(false)
+  
+  // Configuración de turnos
+  ofreceTurnos      Boolean   @default(false)
+  horarioApertura   String?   // "09:00"
+  horarioCierre     String?   // "18:00"
+  diasLaborables    String?   // "L,V,S" (días que atiende)
+  duracionTurnoMin  Int       @default(60) // minutos por turno
+  
+  // Configuración de stock (premium)
+  stockMinimoAlerta Int       @default(5) // alerta cuando queda menos de esto
+  
   creadoEn      DateTime      @default(now())
   actualizadoEn DateTime      @updatedAt
 
@@ -89,10 +100,14 @@ model Taller {
   accesos       AccesoTallerVehiculo[]
   clientes      ClienteTaller[]
   clientesVehiculos VehiculoTaller[]
+  turnos        Turno[]
+  productos     Producto[]
+  presupuestos  Presupuesto[]
 
   @@index([slug])
   @@index([estado])
   @@index([ciudad])
+  @@index([ofreceTurnos])
 }
 
 // ============ VEHÍCULOS ============
@@ -383,3 +398,145 @@ model CronogramaService {
   @@index([marca, modelo])
   @@index([marca, kilometraje])
 }
+
+// ============ TURNOS ONLINE ============
+
+enum EstadoTurno {
+  SOLICITADO
+  CONFIRMADO
+  COMPLETADO
+  CANCELADO
+  RECHAZADO
+}
+
+model Turno {
+  id          String       @id @default(cuid())
+  tallerId    String
+  taller      Taller       @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  
+  // Datos del cliente que pide el turno
+  nombreCliente   String
+  telefonoCliente String
+  emailCliente    String?
+  
+  // Vehículo (opcional: puede ser que no esté registrado)
+  vehiculoId      String?
+  vehiculoPatente String?
+  vehiculoMarca   String?
+  vehiculoModelo  String?
+  
+  // Detalles del turno
+  fechaHora       DateTime   // fecha y hora solicitada
+  motivo          String     // "Cambio de aceite", "Revisión de frenos"
+  descripcion     String?
+  estado          EstadoTurno @default(SOLICITADO)
+  
+  // Respuesta del taller
+  notaTaller      String?
+  respondidoEn    DateTime?
+  
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+
+  @@index([tallerId, estado])
+  @@index([tallerId, fechaHora])
+  @@index([estado])
+}
+
+// ============ STOCK Y PRODUCTOS (PREMIUM) ============
+
+model Producto {
+  id          String   @id @default(cuid())
+  tallerId    String
+  taller      Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  
+  nombre      String
+  codigo      String?  // código interno o de barras
+  categoria   String?  // "Aceites", "Filtros", "Frenos", etc.
+  marca       String?  // marca del producto
+  descripcion String?
+  
+  cantidad    Int      @default(0)
+  stockMinimo Int      @default(5)
+  precioCompra  Float?
+  precioVenta   Float?
+  ubicacion     String? // estante/bandeja
+  
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  movimientos MovimientoStock[]
+
+  @@index([tallerId, activo])
+  @@index([tallerId, categoria])
+  @@index([tallerId, cantidad])
+}
+
+enum TipoMovimiento {
+  COMPRA
+  USO
+  AJUSTE
+  VENTA
+  PERDIDA
+}
+
+model MovimientoStock {
+  id          String         @id @default(cuid())
+  productoId  String
+  producto    Producto       @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  tallerId    String
+  
+  tipo        TipoMovimiento
+  cantidad    Int  // positivo = entrada, negativo = salida
+  motivo      String?  // "Compra a proveedor X", "Usado en trabajo Y"
+  precio      Float?  // precio unitario si aplica
+  
+  creadoEn    DateTime @default(now())
+
+  @@index([productoId, creadoEn])
+  @@index([tallerId, creadoEn])
+}
+
+// ============ PRESUPUESTOS (PREMIUM) ============
+
+enum EstadoPresupuesto {
+  BORRADOR
+  ENVIADO
+  APROBADO
+  RECHAZADO
+  VENCIDO
+}
+
+model Presupuesto {
+  id          String            @id @default(cuid())
+  tallerId    String
+  taller      Taller            @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  
+  // Cliente
+  clienteNombre   String
+  clienteTelefono String
+  clienteEmail    String?
+  
+  // Vehículo
+  vehiculoPatente String?
+  vehiculoMarca   String?
+  vehiculoModelo  String?
+  
+  // Items del presupuesto
+  items       Json  // [{ descripcion, cantidad, precioUnitario, subtotal }]
+  subtotal    Float
+  descuento   Float  @default(0)
+  total       Float
+  
+  estado      EstadoPresupuesto @default(BORRADOR)
+  validez     Int    @default(15) // días de validez
+  notas       String?
+  
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@index([tallerId, estado])
+  @@index([tallerId, creadoEn])
+}
+

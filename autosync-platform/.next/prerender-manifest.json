@@ -242,6 +242,54 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/app/taller/stock": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/app/taller/stock",
+      "dataRoute": "/app/taller/stock.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
+    "/app/taller/turnos": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/app/taller/turnos",
+      "dataRoute": "/app/taller/turnos.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/app/taller/vehiculos": {
       "experimentalBypassFor": [
         {
@@ -342,8 +390,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "0047cd3839f6e5b78e1557181b54e088",
-    "previewModeSigningKey": "aa8b6ab27da6baec9479192688a21166a1f5ef8e868ad149d1a034d1e7bdd761",
-    "previewModeEncryptionKey": "74f26372bb6526523785178dbdec1ede65868647d09768ba6a5d303db5d50805"
+    "previewModeId": "396d7d1419e70638f6e3681dfce062eb",
+    "previewModeSigningKey": "1a8dbc2aca17770f08c6937539b30c45f767af31e98f85e08b39245ebe3eeeab",
+    "previewModeEncryptionKey": "701dc3d1a67208c78cb8c4fcdfe63ac657c987667014097d801de5cc57008060"
   }
 }

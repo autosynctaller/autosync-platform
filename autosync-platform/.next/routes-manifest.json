@@ -22,12 +22,28 @@
   },
   "dynamicRoutes": [
     {
+      "page": "/api/stock/productos/[id]",
+      "regex": "^/api/stock/productos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/stock/productos/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/api/trabajos/[id]/fotos",
       "regex": "^/api/trabajos/([^/]+?)/fotos(?:/)?$",
       "routeKeys": {
         "nxtPid": "nxtPid"
       },
       "namedRegex": "^/api/trabajos/(?<nxtPid>[^/]+?)/fotos(?:/)?$"
+    },
+    {
+      "page": "/api/turnos/[id]",
+      "regex": "^/api/turnos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/turnos/(?<nxtPid>[^/]+?)(?:/)?$"
     },
     {
       "page": "/api/vehiculos/[id]",
@@ -152,10 +168,28 @@
       "namedRegex": "^/api/servicios(?:/)?$"
     },
     {
+      "page": "/api/stock/movimientos",
+      "regex": "^/api/stock/movimientos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stock/movimientos(?:/)?$"
+    },
+    {
+      "page": "/api/stock/productos",
+      "regex": "^/api/stock/productos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stock/productos(?:/)?$"
+    },
+    {
       "page": "/api/talleres",
       "regex": "^/api/talleres(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/talleres(?:/)?$"
+    },
+    {
+      "page": "/api/turnos",
+      "regex": "^/api/turnos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/turnos(?:/)?$"
     },
     {
       "page": "/api/upload",
@@ -228,6 +262,18 @@
       "regex": "^/app/taller/servicios(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/app/taller/servicios(?:/)?$"
+    },
+    {
+      "page": "/app/taller/stock",
+      "regex": "^/app/taller/stock(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/stock(?:/)?$"
+    },
+    {
+      "page": "/app/taller/turnos",
+      "regex": "^/app/taller/turnos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/turnos(?:/)?$"
     },
     {
       "page": "/app/taller/vehiculos",

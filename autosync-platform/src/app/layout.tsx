@@ -7,6 +7,13 @@ const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "AutoSync - Historial Digital Automotor",
   description: "La plataforma de historial vehicular de Argentina. Consultá el historial de tu vehículo, gestioná tus servicios y conectá con talleres de confianza.",
+  manifest: "/manifest.json",
+  themeColor: "#f59e0b",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AutoSync",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
