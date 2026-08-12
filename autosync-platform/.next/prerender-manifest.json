@@ -194,6 +194,30 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/app/taller/recordatorios": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/app/taller/recordatorios",
+      "dataRoute": "/app/taller/recordatorios.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/app/taller/servicios": {
       "experimentalBypassFor": [
         {
@@ -318,8 +342,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "362331c6f2327358e9adbe8ef506eb3d",
-    "previewModeSigningKey": "84efd73327bcba37c4228dfd58481fe7507066c9ce2da726bf5c6c3a32671afa",
-    "previewModeEncryptionKey": "a83fc0233730ec147263abfff1862e5ec88012fda4d621ffe2206e99240f86d4"
+    "previewModeId": "0047cd3839f6e5b78e1557181b54e088",
+    "previewModeSigningKey": "aa8b6ab27da6baec9479192688a21166a1f5ef8e868ad149d1a034d1e7bdd761",
+    "previewModeEncryptionKey": "74f26372bb6526523785178dbdec1ede65868647d09768ba6a5d303db5d50805"
   }
 }

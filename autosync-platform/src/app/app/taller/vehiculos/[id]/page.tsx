@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Car, Loader2, Plus, Calendar, Gauge, Wrench, Camera, X, ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { DiagnosticosPanel, CronogramaSugerido } from '@/components/site/TallerWidgets'
 
 interface Trabajo {
   id: string
@@ -141,6 +142,20 @@ export default function VehiculoDetallePage({ params }: { params: Promise<{ id: 
             ))}
           </ol>
         )}
+      </div>
+
+      {/* Cronograma sugerido */}
+      {vehiculo.kilometraje != null && (
+        <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4">
+          <h2 className="mb-1 text-sm font-semibold text-primary">Cronograma de services - {vehiculo.marca}</h2>
+          <p className="mb-3 text-xs text-muted-foreground">Según los {vehiculo.kilometraje.toLocaleString('es-AR')} km actuales.</p>
+          <CronogramaSugerido marca={vehiculo.marca} modelo={vehiculo.modelo} kilometraje={vehiculo.kilometraje} />
+        </div>
+      )}
+
+      {/* Diagnósticos */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <DiagnosticosPanel vehiculoId={vehiculo.id} />
       </div>
     </div>
   )

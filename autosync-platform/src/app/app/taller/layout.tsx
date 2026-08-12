@@ -49,6 +49,7 @@ export default function TallerLayout({ children }: { children: React.ReactNode }
   const links = [
     { href: '/app/taller/vehiculos', label: 'Vehículos', icon: Car },
     { href: '/app/taller/servicios', label: 'Servicios', icon: Wrench },
+    { href: '/app/taller/recordatorios', label: 'Recordatorios', icon: Bell },
     { href: '/app/taller/diagnosticos', label: 'Diagnósticos', icon: Search },
     { href: '/app/taller/estadisticas', label: 'Estadísticas', icon: BarChart3 },
     { href: '/app/taller/perfil', label: 'Mi perfil', icon: Settings },

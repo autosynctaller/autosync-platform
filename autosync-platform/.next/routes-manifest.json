@@ -38,6 +38,14 @@
       "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)(?:/)?$"
     },
     {
+      "page": "/api/vehiculos/[id]/diagnosticos",
+      "regex": "^/api/vehiculos/([^/]+?)/diagnosticos(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)/diagnosticos(?:/)?$"
+    },
+    {
       "page": "/api/vehiculos/[id]/trabajos",
       "regex": "^/api/vehiculos/([^/]+?)/trabajos(?:/)?$",
       "routeKeys": {
@@ -132,6 +140,12 @@
       "namedRegex": "^/api/estadisticas(?:/)?$"
     },
     {
+      "page": "/api/recordatorios",
+      "regex": "^/api/recordatorios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/recordatorios(?:/)?$"
+    },
+    {
       "page": "/api/servicios",
       "regex": "^/api/servicios(?:/)?$",
       "routeKeys": {},
@@ -202,6 +216,12 @@
       "regex": "^/app/taller/perfil(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/app/taller/perfil(?:/)?$"
+    },
+    {
+      "page": "/app/taller/recordatorios",
+      "regex": "^/app/taller/recordatorios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/recordatorios(?:/)?$"
     },
     {
       "page": "/app/taller/servicios",
