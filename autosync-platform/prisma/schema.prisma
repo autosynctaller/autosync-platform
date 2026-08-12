@@ -540,3 +540,94 @@ model Presupuesto {
   @@index([tallerId, creadoEn])
 }
 
+// ============ PUBLICIDAD (FUTURO) ============
+
+enum TipoAnuncio {
+  BANNER_HOME       // banner en la home
+  BANNER_SEARCH     // banner en resultados de búsqueda
+  CARD_DIRECTORIO   // card destacado en directorio de talleres
+  SIDEBAR           // banner lateral
+  SPONSORED_LISTING // taller/autoparte patrocinada en listado
+  INTERSTITIAL      // pantalla completa entre acciones (mobile)
+}
+
+enum EstadoAnuncio {
+  BORRADOR
+  ACTIVO
+  PAUSADO
+  VENCIDO
+  RECHAZADO
+}
+
+enum AnuncianteTipo {
+  AUTOPARTISTA   // tienda de repuestos
+  TALLER         // taller que se promociona
+  SEGURO         // compañía de seguros
+  OTRO           // otro tipo de anunciante
+}
+
+model Anunciante {
+  id          String   @id @default(cuid())
+  nombre      String   // "Repuestos Juan", "Seguros XYZ"
+  tipo        AnuncianteTipo @default(OTRO)
+  email       String?
+  telefono    String?
+  logo        String?  // URL del logo
+  web         String?  // sitio web
+  creadoEn    DateTime @default(now())
+
+  anuncios    Anuncio[]
+
+  @@index([tipo])
+}
+
+model Anuncio {
+  id          String        @id @default(cuid())
+  anuncianteId String
+  anunciante  Anunciante   @relation(fields: [anuncianteId], references: [id], onDelete: Cascade)
+
+  titulo      String        // "Repuestos al mejor precio"
+  descripcion String?       // texto del anuncio
+  imagen      String?       // URL de la imagen del banner
+  url         String        // URL a la que dirige el click
+  cta         String?       // texto del botón ("Ver ofertas", "Comprar")
+
+  tipo        TipoAnuncio   // dónde se muestra
+  estado      EstadoAnuncio @default(BORRADOR)
+
+  // Fechas de campaña
+  inicio      DateTime      // cuándo empieza a mostrarse
+  fin         DateTime?     // cuándo deja (null = sin vencimiento)
+
+  // Métricas
+  impresiones Int           @default(0)
+  clicks      Int           @default(0)
+
+  // Configuración
+  Prioridad   Int           @default(0)  // mayor = se muestra primero
+  soloCiudad  String?       // si está seteado, solo se muestra en esa ciudad
+  soloMarca   String?       // si está seteado, solo cuando se busca esa marca de auto
+
+  creadoEn    DateTime      @default(now())
+  actualizadoEn DateTime    @updatedAt
+
+  clicks_tracking ClickAnuncio[]
+
+  @@index([tipo, estado, inicio])
+  @@index([anuncianteId])
+}
+
+// Modelo para trackear clicks individuales (para analytics futuro)
+model ClickAnuncio {
+  id          String   @id @default(cuid())
+  anuncioId   String
+  anuncio     Anuncio  @relation(fields: [anuncioId], references: [id], onDelete: Cascade)
+
+  ip          String?  // IP anonimizada para evitar doble conteo
+  userAgent   String?  // navegador/dispositivo
+  ciudad      String?  // si se puede detectar
+  creadoEn    DateTime @default(now())
+
+  @@index([anuncioId, creadoEn])
+}
+

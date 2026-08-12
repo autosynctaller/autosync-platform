@@ -114,6 +114,18 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/api/anuncios",
+      "regex": "^/api/anuncios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/anuncios(?:/)?$"
+    },
+    {
+      "page": "/api/anuncios/click",
+      "regex": "^/api/anuncios/click(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/anuncios/click(?:/)?$"
+    },
+    {
       "page": "/api/auth/login",
       "regex": "^/api/auth/login(?:/)?$",
       "routeKeys": {},
@@ -220,6 +232,30 @@
       "regex": "^/app(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/app(?:/)?$"
+    },
+    {
+      "page": "/app/admin/anuncios",
+      "regex": "^/app/admin/anuncios(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/admin/anuncios(?:/)?$"
+    },
+    {
+      "page": "/app/admin/anuncios/nuevo",
+      "regex": "^/app/admin/anuncios/nuevo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/admin/anuncios/nuevo(?:/)?$"
+    },
+    {
+      "page": "/app/admin/dashboard",
+      "regex": "^/app/admin/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/admin/dashboard(?:/)?$"
+    },
+    {
+      "page": "/app/admin/talleres",
+      "regex": "^/app/admin/talleres(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/admin/talleres(?:/)?$"
     },
     {
       "page": "/app/dueno",
