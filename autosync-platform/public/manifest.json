@@ -2,14 +2,16 @@
   "name": "AutoSync - Taller",
   "short_name": "AutoSync",
   "description": "Gestión de taller mecánico e historial vehicular",
-  "start_url": "/app/taller/vehiculos",
+  "start_url": "/app/taller/carga-rapida",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#18181b",
   "theme_color": "#f59e0b",
   "icons": [],
   "shortcuts": [
-    { "name": "Cargar trabajo", "url": "/app/taller/vehiculos" },
+    { "name": "Carga rápida", "url": "/app/taller/carga-rapida", "description": "Cargar trabajo desde el celular" },
+    { "name": "Vehículos", "url": "/app/taller/vehiculos" },
     { "name": "Turnos", "url": "/app/taller/turnos" }
   ]
 }

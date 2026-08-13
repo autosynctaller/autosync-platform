@@ -218,6 +218,30 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/app/taller/carga-rapida": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/app/taller/carga-rapida",
+      "dataRoute": "/app/taller/carga-rapida.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/app/taller/diagnosticos": {
       "experimentalBypassFor": [
         {
@@ -534,8 +558,8 @@
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "3f162e7668c7b5f64e53c68075c4f2a1",
-    "previewModeSigningKey": "455645ad86062f372b18a0c7728c433cfba40961859d0515a376c5206c0d6249",
-    "previewModeEncryptionKey": "11d94f14464223ccf5763f8dded9b08a25a2c9c5474b199d1686a140d710bcd9"
+    "previewModeId": "f9d4aa97cf76de82826161b9b463b217",
+    "previewModeSigningKey": "647a616cd07fa8fff409c38a265be36336abfe4069184a8cb735ec4d30c7d992",
+    "previewModeEncryptionKey": "3c1ec790618ebfe2d0b96fcdad906c206f5db38702f7036963fd93b8d3029c2e"
   }
 }

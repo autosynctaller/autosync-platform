@@ -70,6 +70,14 @@
       "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)/diagnosticos(?:/)?$"
     },
     {
+      "page": "/api/vehiculos/[id]/nota",
+      "regex": "^/api/vehiculos/([^/]+?)/nota(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/vehiculos/(?<nxtPid>[^/]+?)/nota(?:/)?$"
+    },
+    {
       "page": "/api/vehiculos/[id]/trabajos",
       "regex": "^/api/vehiculos/([^/]+?)/trabajos(?:/)?$",
       "routeKeys": {
@@ -184,6 +192,12 @@
       "namedRegex": "^/api/estadisticas(?:/)?$"
     },
     {
+      "page": "/api/notificaciones",
+      "regex": "^/api/notificaciones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/notificaciones(?:/)?$"
+    },
+    {
       "page": "/api/presupuestos",
       "regex": "^/api/presupuestos(?:/)?$",
       "routeKeys": {},
@@ -296,6 +310,12 @@
       "regex": "^/app/dueno/reclamar(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/app/dueno/reclamar(?:/)?$"
+    },
+    {
+      "page": "/app/taller/carga-rapida",
+      "regex": "^/app/taller/carga\\-rapida(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/carga\\-rapida(?:/)?$"
     },
     {
       "page": "/app/taller/diagnosticos",

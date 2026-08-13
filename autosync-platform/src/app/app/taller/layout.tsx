@@ -74,6 +74,7 @@ export default function TallerLayout({ children }: { children: React.ReactNode }
           </Link>
           <div className="flex items-center gap-2">
             <span className="hidden text-sm text-muted-foreground sm:block">{user.nombre}</span>
+            <NotificacionBell />
             <button onClick={handleLogout} className="rounded-md p-2 hover:bg-muted"><LogOut className="h-4 w-4" /></button>
           </div>
         </div>
@@ -115,6 +116,55 @@ export default function TallerLayout({ children }: { children: React.ReactNode }
           {children}
         </main>
       </div>
+    </div>
+  )
+}
+
+function NotificacionBell() {
+  const [noLeidas, setNoLeidas] = useState(0)
+  const [showPanel, setShowPanel] = useState(false)
+  const [notifs, setNotifs] = useState<any[]>([])
+
+  useEffect(() => {
+    const cargar = () => fetch('/api/notificaciones').then(r => r.json()).then(d => {
+      setNoLeidas(d.noLeidas || 0)
+      setNotifs(d.notificaciones || [])
+    })
+    cargar()
+    const interval = setInterval(cargar, 30000) // cada 30s
+    return () => clearInterval(interval)
+  }, [])
+
+  const marcarLeidas = async () => {
+    await fetch('/api/notificaciones', { method: 'PATCH' })
+    setNoLeidas(0)
+    setNotifs(prev => prev.map(n => ({ ...n, leida: true })))
+  }
+
+  return (
+    <div className="relative">
+      <button onClick={() => { setShowPanel(!showPanel); if (noLeidas > 0) marcarLeidas() }} className="relative rounded-md p-2 hover:bg-muted">
+        <Bell className="h-4 w-4" />
+        {noLeidas > 0 && (
+          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{noLeidas > 9 ? '9+' : noLeidas}</span>
+        )}
+      </button>
+      {showPanel && (
+        <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-card shadow-lg">
+          <div className="border-b border-border p-3"><p className="text-sm font-semibold">Notificaciones</p></div>
+          <div className="max-h-80 overflow-y-auto">
+            {notifs.length === 0 ? (
+              <p className="p-4 text-center text-xs text-muted-foreground">Sin notificaciones</p>
+            ) : notifs.slice(0, 10).map(n => (
+              <div key={n.id} className={`border-b border-border/50 p-3 ${!n.leida ? 'bg-primary/5' : ''}`}>
+                <p className="text-xs font-medium">{n.titulo}</p>
+                <p className="text-xs text-muted-foreground">{n.mensaje}</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">{new Date(n.creadoEn).toLocaleString('es-AR')}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
