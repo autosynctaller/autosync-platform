@@ -1,7 +1,24 @@
+'use client'
 import Link from 'next/link'
-import { Car, Search, Wrench, Shield, TrendingUp, ArrowRight } from 'lucide-react'
+import { useState } from 'react'
+import { Car, Search, Wrench, Shield, TrendingUp, ArrowRight, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
 export default function HomePage() {
+  const [patente, setPatente] = useState('')
+  const [buscando, setBuscando] = useState(false)
+  const [resultado, setResultado] = useState<null | { encontrado: boolean; vehiculo?: any; mensaje: string }>(null)
+
+  const buscar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (patente.length < 6) return
+    setBuscando(true); setResultado(null)
+    try {
+      const res = await fetch(`/api/vehiculos/buscar?patente=${encodeURIComponent(patente)}`)
+      const data = await res.json()
+      setResultado(data)
+    } catch {} finally { setBuscando(false) }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -103,16 +120,45 @@ export default function HomePage() {
           <p className="mt-4 text-muted-foreground">
             Ingresá una patente para saber si el vehículo tiene historial cargado en AutoSync.
           </p>
-          <form className="mt-8 flex gap-3">
+          <form onSubmit={buscar} className="mt-8 flex gap-3">
             <input
               type="text"
+              value={patente}
+              onChange={(e) => setPatente(e.target.value.toUpperCase())}
               placeholder="Ej: AB123CD"
+              maxLength={7}
               className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-lg uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <button className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
-              Consultar
+            <button type="submit" disabled={buscando} className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+              {buscando ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Consultar'}
             </button>
           </form>
+
+          {resultado && (
+            <div className={`mt-6 rounded-xl border-2 p-6 ${resultado.encontrado ? 'border-emerald-300 bg-emerald-50' : 'border-zinc-300 bg-zinc-50'}`}>
+              {resultado.encontrado ? (
+                <div>
+                  <div className="mb-2 flex items-center justify-center gap-2">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    <span className="text-lg font-bold text-emerald-900">{resultado.vehiculo?.marca} {resultado.vehiculo?.modelo} ({resultado.vehiculo?.anio})</span>
+                  </div>
+                  <p className="text-sm text-emerald-700">{resultado.mensaje}</p>
+                  <p className="mt-2 text-xs text-emerald-600">Patente: <span className="font-mono font-bold">{patente}</span></p>
+                  <Link href="/login" className="mt-4 inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                    Crear cuenta para ver detalles →
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <div className="mb-2 flex items-center justify-center gap-2">
+                    <XCircle className="h-6 w-6 text-zinc-400" />
+                    <span className="text-lg font-bold text-zinc-700">Sin historial</span>
+                  </div>
+                  <p className="text-sm text-zinc-500">{resultado.mensaje}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

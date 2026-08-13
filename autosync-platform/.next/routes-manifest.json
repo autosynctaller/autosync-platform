@@ -22,6 +22,14 @@
   },
   "dynamicRoutes": [
     {
+      "page": "/api/presupuestos/[id]",
+      "regex": "^/api/presupuestos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/presupuestos/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/api/stock/productos/[id]",
       "regex": "^/api/stock/productos/([^/]+?)(?:/)?$",
       "routeKeys": {
@@ -176,6 +184,12 @@
       "namedRegex": "^/api/estadisticas(?:/)?$"
     },
     {
+      "page": "/api/presupuestos",
+      "regex": "^/api/presupuestos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/presupuestos(?:/)?$"
+    },
+    {
       "page": "/api/recordatorios",
       "regex": "^/api/recordatorios(?:/)?$",
       "routeKeys": {},
@@ -300,6 +314,18 @@
       "regex": "^/app/taller/perfil(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/app/taller/perfil(?:/)?$"
+    },
+    {
+      "page": "/app/taller/presupuestos",
+      "regex": "^/app/taller/presupuestos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/presupuestos(?:/)?$"
+    },
+    {
+      "page": "/app/taller/presupuestos/nuevo",
+      "regex": "^/app/taller/presupuestos/nuevo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/taller/presupuestos/nuevo(?:/)?$"
     },
     {
       "page": "/app/taller/recordatorios",

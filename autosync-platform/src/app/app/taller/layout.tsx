@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Car, Wrench, Search, FileText, BarChart3, User, LogOut, Loader2, Settings, Bell, Calendar, Package } from 'lucide-react'
+import { Car, Wrench, Search, FileText, BarChart3, User, LogOut, Loader2, Settings, Bell, Calendar, Package, FileSpreadsheet } from 'lucide-react'
 
 interface UserTaller {
   id: string
@@ -50,6 +50,7 @@ export default function TallerLayout({ children }: { children: React.ReactNode }
     { href: '/app/taller/vehiculos', label: 'Vehículos', icon: Car },
     { href: '/app/taller/turnos', label: 'Turnos', icon: Calendar },
     { href: '/app/taller/stock', label: 'Stock', icon: Package },
+    { href: '/app/taller/presupuestos', label: 'Presupuestos', icon: FileSpreadsheet },
     { href: '/app/taller/servicios', label: 'Servicios', icon: Wrench },
     { href: '/app/taller/recordatorios', label: 'Recordatorios', icon: Bell },
     { href: '/app/taller/diagnosticos', label: 'Diagnósticos', icon: Search },

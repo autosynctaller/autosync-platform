@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Car, Loader2, ArrowLeft, Calendar, Gauge, Wrench, FileDown, Edit, Save, X, Phone, MessageCircle, Shield, AlertCircle } from 'lucide-react'
+import { generarPDFHistorial } from '@/lib/pdf'
 
 interface Trabajo {
   id: string
@@ -108,7 +109,10 @@ export default function DuenoVehiculoPage({ params }: { params: Promise<{ id: st
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/app/dueno" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Mis vehículos</Link>
-          <button onClick={() => setEditing(!editing)} className="rounded-md p-2 hover:bg-muted"><Edit className="h-4 w-4" /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => generarPDFHistorial(vehiculo)} className="rounded-md border border-border p-2 hover:bg-muted" title="Exportar PDF"><FileDown className="h-4 w-4" /></button>
+            <button onClick={() => setEditing(!editing)} className="rounded-md p-2 hover:bg-muted"><Edit className="h-4 w-4" /></button>
+          </div>
         </div>
       </header>
 
