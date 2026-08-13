@@ -1,0 +1,3 @@
+{
+  "/api/vehiculos/buscar/route": "app/api/vehiculos/buscar/route.js"
+}
