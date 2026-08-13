@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Wrench, MapPin, Phone, MessageCircle, Loader2, BadgeCheck, ArrowLeft } from 'lucide-react'
+import { Wrench, MapPin, Phone, MessageCircle, Loader2, BadgeCheck, ArrowLeft, Calendar } from 'lucide-react'
 
 export default function TallerPerfilPage() {
   const params = useParams()
@@ -41,6 +41,7 @@ export default function TallerPerfilPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             {whatsappUrl && <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"><MessageCircle className="h-4 w-4" />WhatsApp</a>}
             <a href={`tel:${taller.telefono}`} className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted"><Phone className="h-4 w-4" />Llamar</a>
+            {taller.ofreceTurnos && <Link href={`/talleres/${slug}/turno`} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"><Calendar className="h-4 w-4" />Pedir turno online</Link>}
           </div>
         </div>
         <div className="mt-6 rounded-xl border-2 border-dashed p-8 text-center"><p className="text-sm text-muted-foreground">¿Tienes un vehículo que llevó a este taller? <Link href="/login?tab=registro" className="font-medium text-primary">Creá tu cuenta</Link> y reclamalo para ver el historial completo.</p></div>

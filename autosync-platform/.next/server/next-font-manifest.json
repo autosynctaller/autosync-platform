@@ -63,6 +63,9 @@
     "[project]/autosync-platform/src/app/talleres/[slug]/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ],
+    "[project]/autosync-platform/src/app/talleres/[slug]/turno/page": [
+      "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
+    ],
     "[project]/autosync-platform/src/app/talleres/page": [
       "static/media/caa3a2e1cccd8315-s.p.3b6cae6d.woff2"
     ]

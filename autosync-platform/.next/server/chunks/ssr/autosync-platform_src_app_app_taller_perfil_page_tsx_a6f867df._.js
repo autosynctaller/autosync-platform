@@ -1,3 +1,0 @@
-module.exports=[94679,a=>{"use strict";var b=a.i(56848);function c(){return(0,b.jsxs)("div",{className:"space-y-6",children:[(0,b.jsx)("h1",{className:"text-2xl font-bold",children:"Mi perfil"}),(0,b.jsx)("div",{className:"rounded-xl border-2 border-dashed p-8 text-center",children:(0,b.jsx)("p",{className:"text-sm text-muted-foreground",children:"🚧 Próximamente: editar datos del taller, logo, dirección, plan."})})]})}a.s(["default",()=>c])}];
-
-//# sourceMappingURL=autosync-platform_src_app_app_taller_perfil_page_tsx_a6f867df._.js.map

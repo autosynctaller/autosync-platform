@@ -92,6 +92,14 @@
         "nxtPslug": "nxtPslug"
       },
       "namedRegex": "^/talleres/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/talleres/[slug]/turno",
+      "regex": "^/talleres/([^/]+?)/turno(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/talleres/(?<nxtPslug>[^/]+?)/turno(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -196,6 +204,12 @@
       "regex": "^/api/talleres(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/api/talleres(?:/)?$"
+    },
+    {
+      "page": "/api/talleres/perfil",
+      "regex": "^/api/talleres/perfil(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/talleres/perfil(?:/)?$"
     },
     {
       "page": "/api/turnos",

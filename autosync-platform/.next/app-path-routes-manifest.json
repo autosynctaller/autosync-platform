@@ -15,6 +15,7 @@
   "/api/stock/movimientos/route": "/api/stock/movimientos",
   "/api/stock/productos/[id]/route": "/api/stock/productos/[id]",
   "/api/stock/productos/route": "/api/stock/productos",
+  "/api/talleres/perfil/route": "/api/talleres/perfil",
   "/api/talleres/route": "/api/talleres",
   "/api/trabajos/[id]/fotos/route": "/api/trabajos/[id]/fotos",
   "/api/turnos/[id]/route": "/api/turnos/[id]",
@@ -46,5 +47,6 @@
   "/login/page": "/login",
   "/page": "/",
   "/talleres/[slug]/page": "/talleres/[slug]",
+  "/talleres/[slug]/turno/page": "/talleres/[slug]/turno",
   "/talleres/page": "/talleres"
 }
