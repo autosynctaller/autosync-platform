@@ -28,30 +28,13 @@ export async function PATCH(
     // Actualizar notas
     await db.vehiculo.update({ where: { id: vehiculoId }, data: { notas: notas || null } })
 
-    // Crear/actualizar registro de notificación de nota
+    // Actualizar registro de notificación de nota (solo marca que hay una nota nueva)
+    // NO se notifica a ningún taller. La nota se ve cuando el taller abre el historial del vehículo.
     const existente = await db.notificacionNota.findFirst({ where: { vehiculoId } })
     if (existente) {
       await db.notificacionNota.update({ where: { id: existente.id }, data: { nota: notas || '', actualizadoEn: new Date() } })
     } else {
       await db.notificacionNota.create({ data: { vehiculoId, nota: notas || '', actualizadoEn: new Date() } })
-    }
-
-    // Notificar a todos los talleres que trabajaron en este vehículo
-    const talleres = await db.vehiculoTaller.findMany({
-      where: { vehiculoId },
-      include: { taller: { select: { userId: true, nombre: true } } },
-    })
-
-    for (const vt of talleres) {
-      await db.notificacion.create({
-        data: {
-          userId: vt.taller.userId,
-          tipo: 'NOTA_CLIENTE' as never,
-          titulo: `Nota nueva en ${vehiculo.marca} ${vehiculo.modelo} (${vehiculo.patente})`,
-          mensaje: notas ? `💬 "${notas.slice(0, 100)}"` : 'El dueño borró las notas',
-          data: { vehiculoId },
-        },
-      }).catch(() => {})
     }
 
     return NextResponse.json({ ok: true })

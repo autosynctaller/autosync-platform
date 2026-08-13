@@ -97,6 +97,9 @@ export async function GET(
         orderBy: { fecha: 'desc' },
       })
 
+      // Buscar si hay una nota del dueño (con timestamp)
+      const notaNotif = await db.notificacionNota.findFirst({ where: { vehiculoId: id } })
+
       return NextResponse.json({
         vehiculo: {
           id: vehiculo.id,
@@ -111,8 +114,9 @@ export async function GET(
           vtvVencimiento: vehiculo.vtvVencimiento,
           gncVencimiento: vehiculo.gncVencimiento,
           verificado: vehiculo.verificado,
+          notas: vehiculo.notas,
+          notaActualizadaEn: notaNotif?.actualizadoEn || null,
           trabajos,
-          // No mostrar datos del dueño ni documentos privados
           permisos: {
             verTodo: tieneAccesoCompleto,
             puedeCargarTrabajos: true,

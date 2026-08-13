@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Car, Loader2, Plus, Calendar, Gauge, Wrench, Camera, X, ArrowLeft, Image as ImageIcon } from 'lucide-react'
+import { Car, Loader2, Plus, Calendar, Gauge, Wrench, Camera, X, ArrowLeft, Image as ImageIcon, MessageCircle } from 'lucide-react'
 import { DiagnosticosPanel, CronogramaSugerido } from '@/components/site/TallerWidgets'
 
 interface Trabajo {
@@ -33,6 +33,8 @@ interface Vehiculo {
   combustible: string | null
   vtvVencimiento: string | null
   gncVencimiento: string | null
+  notas: string | null
+  notaActualizadaEn: string | null
   trabajos: Trabajo[]
 }
 
@@ -90,6 +92,24 @@ export default function VehiculoDetallePage({ params }: { params: Promise<{ id: 
           {vehiculo.kilometraje && <span className="flex items-center gap-1"><Gauge className="h-4 w-4" />{vehiculo.kilometraje.toLocaleString('es-AR')} km</span>}
         </div>
       </div>
+
+      {/* Nota del dueño (solo visible para el taller cuando abre el historial) */}
+      {vehiculo.notas && (
+        <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-amber-600" />
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-800">
+              Nota del dueño
+            </p>
+            {vehiculo.notaActualizadaEn && (
+              <span className="text-[10px] text-amber-600">
+                Actualizada: {new Date(vehiculo.notaActualizadaEn).toLocaleString('es-AR')}
+              </span>
+            )}
+          </div>
+          <p className="mt-2 text-sm italic text-amber-900">💬 "{vehiculo.notas}"</p>
+        </div>
+      )}
 
       {/* Formulario de nuevo trabajo */}
       {showForm && (
