@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Loader2, KeyRound, Search, Check, Users, Wrench, Car, Mail, Phone, Calendar } from 'lucide-react'
 
 export default function AdminUsuariosPage() {
@@ -11,6 +11,7 @@ export default function AdminUsuariosPage() {
   const [saving, setSaving] = useState(false)
   const [ok, setOk] = useState(false)
   const [error, setError] = useState('')
+  const resetFormRef = useRef<HTMLFormElement>(null)
 
   const cargar = () => {
     const url = q ? `/api/admin/usuarios?q=${encodeURIComponent(q)}` : '/api/admin/usuarios'
@@ -19,6 +20,11 @@ export default function AdminUsuariosPage() {
   useEffect(() => { cargar() }, [])
 
   const buscar = () => { setLoading(true); cargar() }
+
+  const scrollToReset = (email: string) => {
+    setResetEmail(email)
+    resetFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const resetear = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError(''); setOk(false)
@@ -48,40 +54,27 @@ export default function AdminUsuariosPage() {
             <div key={u.id} className="rounded-lg border border-border bg-card p-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">{u.nombre}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${rolColor[u.rol] || 'bg-zinc-100'}`}>{u.rol.replace('_', ' ')}</span>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{u.email}</span>
-                    {u.telefono && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{u.telefono}</span>}
-                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(u.creadoEn).toLocaleDateString('es-AR')}</span>
-                  </div>
-                  {u.taller && (
-                    <div className="mt-1 flex items-center gap-2 text-xs">
-                      <Wrench className="h-3 w-3 text-blue-500" />
-                      <span className="font-medium">{u.taller.nombre}</span>
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] ${u.taller.plan === 'PREMIUM' ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600'}`}>{u.taller.plan}</span>
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] ${u.taller.estado === 'ACTIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{u.taller.estado}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2"><span className="font-semibold text-sm">{u.nombre}</span><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${rolColor[u.rol] || 'bg-zinc-100'}`}>{u.rol.replace('_', ' ')}</span></div>
+                  <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Mail className="h-3 w-3" />{u.email}</span>{u.telefono && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{u.telefono}</span>}<span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(u.creadoEn).toLocaleDateString('es-AR')}</span></div>
+                  {u.taller && <div className="mt-1 flex items-center gap-2 text-xs"><Wrench className="h-3 w-3 text-blue-500" /><span className="font-medium">{u.taller.nombre}</span><span className={`rounded px-1.5 py-0.5 text-[10px] ${u.taller.plan === 'PREMIUM' ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-600'}`}>{u.taller.plan}</span></div>}
                   {u._count?.vehiculos > 0 && <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Car className="h-3 w-3" />{u._count.vehiculos} vehículo(s)</span>}
                 </div>
-                <button onClick={() => setResetEmail(u.email)} className="rounded-lg border border-border px-3 py-1 text-xs hover:bg-muted"><KeyRound className="mr-1 inline h-3 w-3" />Resetear</button>
+                <button onClick={() => scrollToReset(u.email)} className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"><KeyRound className="mr-1 inline h-3 w-3" />Resetear</button>
               </div>
             </div>
           ))}
         </div>
       }
-      <form onSubmit={resetear} className="rounded-xl border border-border bg-card p-4 space-y-3">
+
+      <form ref={resetFormRef} onSubmit={resetear} className="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="h-4 w-4 text-primary" />Resetear contraseña</h2>
-        {ok && <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-700 flex items-center gap-2"><Check className="h-4 w-4" />Contraseña actualizada</div>}
+        {ok && <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-700 flex items-center gap-2"><Check className="h-4 w-4" />Contraseña actualizada correctamente</div>}
         {error && <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
         <div className="grid gap-3 sm:grid-cols-2">
-          <div><label className="text-xs font-medium">Email</label><input value={resetEmail} onChange={e => setResetEmail(e.target.value)} required placeholder="usuario@email.com" className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
+          <div><label className="text-xs font-medium">Email del usuario</label><input value={resetEmail} onChange={e => setResetEmail(e.target.value)} required placeholder="usuario@email.com" className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
           <div><label className="text-xs font-medium">Nueva contraseña</label><input type="text" value={nuevaPassword} onChange={e => setNuevaPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
         </div>
-        <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Resetear'}</button>
+        <button type="submit" disabled={saving} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Resetear contraseña'}</button>
       </form>
     </div>
   )
