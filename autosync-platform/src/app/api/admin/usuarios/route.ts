@@ -2,33 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
-// GET /api/admin/usuarios - listar todos los usuarios (opcionalmente filtrar con ?q=)
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user || user.rol !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    if (!user || user.rol !== 'SUPER_ADMIN') return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
     const { searchParams } = new URL(req.url)
     const q = searchParams.get('q')
 
-    const where = q ? {
-      OR: [
-        { email: { contains: q, mode: 'insensitive' as const } },
-        { nombre: { contains: q, mode: 'insensitive' as const } },
-      ]
-    } : {}
+    const where = q ? { OR: [{ email: { contains: q } }, { nombre: { contains: q } }] } : {}
 
     const usuarios = await db.user.findMany({
       where,
       select: {
-        id: true,
-        email: true,
-        nombre: true,
-        rol: true,
-        telefono: true,
-        creadoEn: true,
+        id: true, email: true, nombre: true, rol: true, telefono: true, creadoEn: true,
         taller: { select: { id: true, nombre: true, plan: true, estado: true } },
         _count: { select: { vehiculos: true } },
       },

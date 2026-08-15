@@ -1,15 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, KeyRound, Search, Check, Users, Wrench, Car, Mail, Phone, Calendar, Trash2 } from 'lucide-react'
-
-interface Usuario {
-  id: string; email: string; nombre: string; rol: string; telefono: string | null
-  creadoEn: string; taller: { id: string; nombre: string; plan: string; estado: string } | null
-  _count: { vehiculos: number; trabajos: number }
-}
+import { Loader2, KeyRound, Search, Check, Users, Wrench, Car, Mail, Phone, Calendar } from 'lucide-react'
 
 export default function AdminUsuariosPage() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [usuarios, setUsuarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
   const [resetEmail, setResetEmail] = useState('')
@@ -44,14 +38,10 @@ export default function AdminUsuariosPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold">Usuarios</h1><p className="text-sm text-muted-foreground">{usuarios.length} usuarios registrados</p></div>
-
-      {/* Buscar */}
       <div className="flex gap-2">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && buscar()} placeholder="Buscar por email o nombre..." className="w-full rounded-lg border border-border py-2.5 pl-10 pr-3 focus:ring-2 focus:ring-primary" /></div>
         <button onClick={buscar} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Buscar</button>
       </div>
-
-      {/* Lista de usuarios */}
       {loading ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : usuarios.length === 0 ? <div className="rounded-xl border-2 border-dashed p-8 text-center"><Users className="mx-auto mb-2 h-10 w-10 text-muted-foreground/50" /><p className="text-sm text-muted-foreground">Sin usuarios.</p></div> :
         <div className="space-y-2">
           {usuarios.map(u => (
@@ -67,7 +57,6 @@ export default function AdminUsuariosPage() {
                     {u.telefono && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{u.telefono}</span>}
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(u.creadoEn).toLocaleDateString('es-AR')}</span>
                   </div>
-                  {/* Info adicional según rol */}
                   {u.taller && (
                     <div className="mt-1 flex items-center gap-2 text-xs">
                       <Wrench className="h-3 w-3 text-blue-500" />
@@ -76,8 +65,7 @@ export default function AdminUsuariosPage() {
                       <span className={`rounded px-1.5 py-0.5 text-[10px] ${u.taller.estado === 'ACTIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{u.taller.estado}</span>
                     </div>
                   )}
-                  {u._count.vehiculos > 0 && <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Car className="h-3 w-3" />{u._count.vehiculos} vehículo(s)</span>}
-                  {u._count.trabajos > 0 && <span className="ml-3 text-xs text-muted-foreground">{u._count.trabajos} trabajo(s) cargados</span>}
+                  {u._count?.vehiculos > 0 && <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Car className="h-3 w-3" />{u._count.vehiculos} vehículo(s)</span>}
                 </div>
                 <button onClick={() => setResetEmail(u.email)} className="rounded-lg border border-border px-3 py-1 text-xs hover:bg-muted"><KeyRound className="mr-1 inline h-3 w-3" />Resetear</button>
               </div>
@@ -85,8 +73,6 @@ export default function AdminUsuariosPage() {
           ))}
         </div>
       }
-
-      {/* Resetear contraseña */}
       <form onSubmit={resetear} className="rounded-xl border border-border bg-card p-4 space-y-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="h-4 w-4 text-primary" />Resetear contraseña</h2>
         {ok && <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-700 flex items-center gap-2"><Check className="h-4 w-4" />Contraseña actualizada</div>}
