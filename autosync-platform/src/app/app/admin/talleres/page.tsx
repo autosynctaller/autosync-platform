@@ -7,7 +7,7 @@ export default function AdminTalleres() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/talleres').then(r => r.json()).then(d => { setTalleres(d.talleres || []); setLoading(false) })
+    fetch('/api/talleres', { credentials: 'include' }).then(r => r.json()).then(d => { setTalleres(d.talleres || []); setLoading(false) })
   }, [])
 
   return (

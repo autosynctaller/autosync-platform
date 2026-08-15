@@ -21,7 +21,7 @@ export default function AdminAnuncios() {
   const [anuncios, setAnuncios] = useState<Anuncio[]>([])
   const [loading, setLoading] = useState(true)
 
-  const cargar = () => fetch('/api/anuncios?todos=1').then(r => r.json()).then(d => { setAnuncios(d.anuncios || []); setLoading(false) })
+  const cargar = () => fetch('/api/anuncios?todos=1', { credentials: 'include' }).then(r => r.json()).then(d => { setAnuncios(d.anuncios || []); setLoading(false) })
   useEffect(() => { cargar() }, [])
 
   return (

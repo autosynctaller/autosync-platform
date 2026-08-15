@@ -7,7 +7,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/admin/stats').then(r => r.json()).then(d => { setStats(d); setLoading(false) })
+    fetch('/api/admin/stats', { credentials: 'include' }).then(r => r.json()).then(d => { setStats(d); setLoading(false) })
   }, [])
 
   if (loading) return <Loader2 className="h-8 w-8 animate-spin text-primary" />

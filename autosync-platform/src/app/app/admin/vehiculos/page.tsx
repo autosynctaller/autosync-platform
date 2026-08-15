@@ -15,7 +15,7 @@ export default function AdminVehiculosPage() {
   const [q, setQ] = useState('')
 
   useEffect(() => {
-    fetch('/api/admin/vehiculos').then(r => r.json()).then(d => { setVehiculos(d.vehiculos || []); setLoading(false) })
+    fetch('/api/admin/vehiculos', { credentials: 'include' }).then(r => r.json()).then(d => { setVehiculos(d.vehiculos || []); setLoading(false) })
   }, [])
 
   const filtrados = vehiculos.filter(v => !q || v.patente.toLowerCase().includes(q.toLowerCase()) || v.marca.toLowerCase().includes(q.toLowerCase()) || v.modelo.toLowerCase().includes(q.toLowerCase()) || v.owner?.nombre.toLowerCase().includes(q.toLowerCase()))

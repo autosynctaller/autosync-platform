@@ -13,7 +13,7 @@ export default function AdminUsuariosPage() {
 
   const buscar = async () => {
     if (busqueda.length < 2) return
-    const res = await fetch(`/api/admin/usuarios?q=${encodeURIComponent(busqueda)}`)
+    const res = await fetch(`/api/admin/usuarios?q=${encodeURIComponent(busqueda)}`, { credentials: 'include' })
     const data = await res.json()
     setUsuarios(data.usuarios || [])
   }
