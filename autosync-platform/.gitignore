@@ -3,9 +3,7 @@ node_modules/
 .env
 .env.local
 *.log
-.DS_Store
 bun.lock
 upload/
 tool-results/
 autosync-platform/
-.env.example
