@@ -47,7 +47,7 @@ async function main() {
     if (!marca || !modeloRaw) continue
 
     // Procesar cada modelo (pueden ser varios separados por /)
-    const modelos = modeloRaw.split('/').map(m => m.trim()).filter(Boolean)
+    const modelos = modeloRaw.split('/').map((m: string) => m.trim()).filter(Boolean)
 
     for (const modeloNombre of modelos) {
       // Buscar si ya existe un cronograma para esta marca+modelo
