@@ -1,14 +1,15 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Loader2, Plus, Megaphone, ChevronRight, ExternalLink, Eye, MousePointerClick } from 'lucide-react'
+import { Loader2, Plus, Megaphone, ChevronRight, Eye, MousePointerClick } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AdminAnuncios() {
   const [anuncios, setAnuncios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  const cargar = () => fetch('/api/anuncios?todos=1', { credentials: 'include' }).then(r => r.json()).then(d => { setAnuncios(d.anuncios || []); setLoading(false) })
-  useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    fetch('/api/anuncios?todos=1', { credentials: 'include' }).then(r => r.json()).then(d => { setAnuncios(d.anuncios || []); setLoading(false) })
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -26,7 +27,7 @@ export default function AdminAnuncios() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2"><span className="font-medium text-sm">{a.titulo}</span><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${a.estado === 'ACTIVO' ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}>{a.estado}</span><span className="rounded border px-2 py-0.5 text-[10px] text-muted-foreground">{a.tipo?.replace('_', ' ')}</span></div>
                     <p className="text-xs text-muted-foreground mt-0.5">{a.anunciante?.nombre}</p>
-                    <div className="mt-1 flex gap-3 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Eye className="h-3 w-3" />{a.impresiones}</span><span className="flex items-center gap-1"><MousePointerClick className="h-3 w-3" />{a.clicks}</span><span className="font-medium text-primary">{ctr}% CTR</span></div>
+                    <div className="mt-1 flex gap-3 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Eye className="h-3 w-3" />{a.impresiones} impres.</span><span className="flex items-center gap-1"><MousePointerClick className="h-3 w-3" />{a.clicks} clicks</span><span className="font-medium text-primary">{ctr}% CTR</span></div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
