@@ -5,3 +5,7 @@ node_modules/
 *.log
 .DS_Store
 bun.lock
+upload/
+tool-results/
+autosync-platform/
+.env.example
