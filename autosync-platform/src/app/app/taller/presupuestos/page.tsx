@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Loader2, Plus, FileText, Trash2, Send, Check, X, Car, Phone } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface Presupuesto {
   id: string
@@ -20,7 +21,7 @@ export default function PresupuestosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const cargar = () => fetch('/api/presupuestos').then(r => r.json()).then(d => {
+  const cargar = () => authFetch('/api/presupuestos').then(r => r.json()).then(d => {
     if (d.error) setError(d.error)
     setPresupuestos(d.presupuestos || [])
     setLoading(false)
@@ -28,13 +29,13 @@ export default function PresupuestosPage() {
   useEffect(() => { cargar() }, [])
 
   const cambiarEstado = async (id: string, estado: string) => {
-    await fetch(`/api/presupuestos/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado }) })
+    await authFetch(`/api/presupuestos/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado }) })
     cargar()
   }
 
   const eliminar = async (id: string) => {
     if (!confirm('¿Eliminar presupuesto?')) return
-    await fetch(`/api/presupuestos/${id}`, { method: 'DELETE' })
+    await authFetch(`/api/presupuestos/${id}`, { method: 'DELETE' })
     cargar()
   }
 

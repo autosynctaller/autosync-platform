@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Car, Loader2, Wrench, User } from 'lucide-react'
+import { setToken, setStoredUser } from '@/lib/auth-client'
 
 export default function LoginPageInner() {
   const router = useRouter()
@@ -27,10 +28,14 @@ export default function LoginPageInner() {
     e.preventDefault()
     setLoading(true); setError('')
     try {
-      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim().toLowerCase(), password }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      router.push('/app'); router.refresh()
+      if (data.token) {
+        setToken(data.token)
+        setStoredUser(data.user)
+      }
+      window.location.href = '/app'
     } catch (err) { setError(err instanceof Error ? err.message : 'Error') } finally { setLoading(false) }
   }
 

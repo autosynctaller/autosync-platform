@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Search, Loader2 } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 export default function DiagnosticosPage() {
   const [q, setQ] = useState('')
@@ -13,7 +14,7 @@ export default function DiagnosticosPage() {
     if (q.length < 2) return
     setBuscando(true); setBuscado(true)
     try {
-      const res = await fetch(`/api/diagnosticos/buscar?q=${encodeURIComponent(q)}`)
+      const res = await authFetch(`/api/diagnosticos/buscar?q=${encodeURIComponent(q)}`)
       const data = await res.json()
       setResultados(data.resultados || [])
     } catch {} finally { setBuscando(false) }

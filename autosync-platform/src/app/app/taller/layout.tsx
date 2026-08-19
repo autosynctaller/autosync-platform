@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Car, Wrench, Search, FileText, BarChart3, User, LogOut, Loader2, Settings, Bell, Calendar, Package, FileSpreadsheet } from 'lucide-react'
+import { authFetch, getStoredUser, logout } from '@/lib/auth-client'
 
 interface UserTaller {
   id: string
@@ -20,7 +21,13 @@ export default function TallerLayout({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    const stored = getStoredUser()
+    if (stored && stored.rol === 'TALLER') {
+      setUser(stored)
+      setLoading(false)
+      return
+    }
+    authFetch('/api/auth/me')
       .then(r => r.json())
       .then(data => {
         if (!data.user) {
@@ -31,11 +38,12 @@ export default function TallerLayout({ children }: { children: React.ReactNode }
           setUser(data.user)
         }
       })
+      .catch(() => router.push('/login'))
       .finally(() => setLoading(false))
   }, [router])
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await logout()
     router.push('/')
     router.refresh()
   }

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Loader2, Save, Calendar, Package, Wrench, Check } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface TallerData {
   nombre: string
@@ -26,7 +27,7 @@ export default function PerfilPage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.json()).then(d => {
+    authFetch('/api/auth/me').then(r => r.json()).then(d => {
       if (d.user?.taller) {
         setData({
           nombre: d.user.taller.nombre || '',
@@ -37,7 +38,7 @@ export default function PerfilPage() {
           plan: d.user.taller.plan || 'GRATIS',
         })
         // Cargar datos completos del taller
-        fetch(`/api/talleres?slug=${d.user.taller.slug}`)
+        authFetch(`/api/talleres?slug=${d.user.taller.slug}`)
           .then(r => r.json())
           .then(tData => {
             if (tData.talleres?.[0]) {
@@ -61,7 +62,7 @@ export default function PerfilPage() {
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setSaved(false)
     try {
-      const res = await fetch('/api/talleres/perfil', {
+      const res = await authFetch('/api/talleres/perfil', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

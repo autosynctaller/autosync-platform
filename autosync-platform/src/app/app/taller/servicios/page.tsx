@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Wrench, Plus, Loader2, Trash2 } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface Servicio { id: string; nombre: string; descripcion: string | null; categoria: string | null; activo: boolean }
 
@@ -11,12 +12,12 @@ export default function ServiciosPage() {
   const [form, setForm] = useState({ nombre: '', descripcion: '', categoria: '' })
   const [guardando, setGuardando] = useState(false)
 
-  const cargar = () => fetch('/api/servicios').then(r => r.json()).then(d => { setServicios(d.servicios || []); setLoading(false) })
+  const cargar = () => authFetch('/api/servicios').then(r => r.json()).then(d => { setServicios(d.servicios || []); setLoading(false) })
   useEffect(() => { cargar() }, [])
 
   const crear = async (e: React.FormEvent) => {
     e.preventDefault(); setGuardando(true)
-    await fetch('/api/servicios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+    await authFetch('/api/servicios', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     setForm({ nombre: '', descripcion: '', categoria: '' }); setShowForm(false); setGuardando(false); cargar()
   }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car, Camera, Loader2, Check, Search, Save, Zap } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface TrabajoRapido {
   patente: string
@@ -31,7 +32,7 @@ export default function CargaRapidaPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.json()).then(d => {
+    authFetch('/api/auth/me').then(r => r.json()).then(d => {
       if (!d.user) { router.push('/login'); return }
       if (d.user.rol !== 'TALLER') { router.push('/app'); return }
       setUser(d.user); setLoading(false)
@@ -42,13 +43,13 @@ export default function CargaRapidaPage() {
     if (trabajo.patente.length < 6) return
     setBuscando(true)
     try {
-      const res = await fetch(`/api/vehiculos/buscar?patente=${trabajo.patente}`)
+      const res = await authFetch(`/api/vehiculos/buscar?patente=${trabajo.patente}`)
       const data = await res.json()
       if (data.encontrado && data.vehiculo) {
         setTrabajo(t => ({ ...t, vehiculoId: data.vehiculo.id, marca: data.vehiculo.marca, modelo: data.vehiculo.modelo }))
       } else {
         // Crear vehículo nuevo
-        const createRes = await fetch('/api/vehiculos/reclamar', {
+        const createRes = await authFetch('/api/vehiculos/reclamar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ patente: trabajo.patente, codigoVerificacion: '000', marca: 'Desconocida', modelo: 'Desconocido', anio: 2000 }),
@@ -66,7 +67,7 @@ export default function CargaRapidaPage() {
     if (!file) return
     const fd = new FormData()
     fd.append('foto', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: fd })
+    const res = await authFetch('/api/upload', { method: 'POST', body: fd })
     const data = await res.json()
     if (data.url) {
       setTrabajo(t => ({ ...t, fotos: [...t.fotos, { url: data.url, categoria: 'DESPUES' }] }))
@@ -81,7 +82,7 @@ export default function CargaRapidaPage() {
     }
     setTrabajo(t => ({ ...t, guardando: true, error: '' }))
     try {
-      const res = await fetch(`/api/vehiculos/${trabajo.vehiculoId}/trabajos`, {
+      const res = await authFetch(`/api/vehiculos/${trabajo.vehiculoId}/trabajos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ export default function CargaRapidaPage() {
       // Subir fotos
       if (data.trabajo?.id && trabajo.fotos.length > 0) {
         for (const f of trabajo.fotos) {
-          await fetch(`/api/trabajos/${data.trabajo.id}/fotos`, {
+          await authFetch(`/api/trabajos/${data.trabajo.id}/fotos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(f),

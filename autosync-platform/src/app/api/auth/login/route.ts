@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         id: user.id, email: user.email, nombre: user.nombre, rol: user.rol,
         taller: user.taller ? { id: user.taller.id, nombre: user.taller.nombre, slug: user.taller.slug, plan: user.taller.plan, estado: user.taller.estado } : null,
       },
+      token,
     })
   } catch (error) {
     console.error('Error en login:', error)

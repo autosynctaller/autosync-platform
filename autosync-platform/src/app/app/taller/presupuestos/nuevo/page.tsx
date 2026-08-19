@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Save, Plus, Trash2 } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface Item { descripcion: string; cantidad: number; precioUnitario: number; subtotal: number }
 
@@ -30,7 +31,7 @@ export default function NuevoPresupuestoPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError('')
     try {
-      const res = await fetch('/api/presupuestos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, items }) })
+      const res = await authFetch('/api/presupuestos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, items }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       router.push('/app/taller/presupuestos')

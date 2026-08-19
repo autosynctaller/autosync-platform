@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Loader2, Plus, Package, AlertTriangle, Search, X, ArrowDown, ArrowUp, Save } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface Producto {
   id: string; nombre: string; codigo: string | null; categoria: string | null
@@ -20,13 +21,13 @@ export default function StockPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const cargar = () => fetch('/api/stock/productos').then(r => r.json()).then(d => { setProductos(d.productos || []); setLoading(false) })
+  const cargar = () => authFetch('/api/stock/productos').then(r => r.json()).then(d => { setProductos(d.productos || []); setLoading(false) })
   useEffect(() => { cargar() }, [])
 
   const crear = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError('')
     try {
-      const res = await fetch('/api/stock/productos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+      const res = await authFetch('/api/stock/productos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setForm({ nombre: '', codigo: '', categoria: '', marca: '', cantidad: '', stockMinimo: '5', precioCompra: '', precioVenta: '', ubicacion: '' })
@@ -37,7 +38,7 @@ export default function StockPage() {
   const registrarMov = async (productoId: string) => {
     setSaving(true); setError('')
     try {
-      const res = await fetch('/api/stock/movimientos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productoId, ...movForm }) })
+      const res = await authFetch('/api/stock/movimientos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productoId, ...movForm }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setMovForm({ tipo: 'COMPRA', cantidad: '', motivo: '', precio: '' }); setShowMov(null); cargar()

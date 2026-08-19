@@ -1,13 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Loader2, Car, Wrench, TrendingUp } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 export default function EstadisticasPage() {
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/estadisticas').then(r => r.json()).then(d => setStats(d)).finally(() => setLoading(false))
+    authFetch('/api/estadisticas').then(r => r.json()).then(d => setStats(d)).finally(() => setLoading(false))
   }, [])
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>

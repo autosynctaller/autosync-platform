@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { db } from './db'
 import type { RolUsuario } from '@prisma/client'
 
@@ -59,7 +59,17 @@ export async function clearAuthCookie() {
 
 export async function getTokenFromCookie(): Promise<string | undefined> {
   const cookieStore = await cookies()
-  return cookieStore.get(COOKIE_NAME)?.value
+  const cookieToken = cookieStore.get(COOKIE_NAME)?.value
+  if (cookieToken) return cookieToken
+
+  // Si no hay cookie (ej: iframe cross-origin), mirar Authorization header
+  const headerStore = await headers()
+  const authHeader = headerStore.get('authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice(7)
+  }
+
+  return undefined
 }
 
 // ============ OBTENER USUARIO ACTUAL ============

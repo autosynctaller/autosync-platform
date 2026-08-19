@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { Loader2, Calendar, Clock, Check, X, Phone, Car } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface Turno {
   id: string
@@ -21,11 +22,11 @@ export default function TurnosPage() {
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState('SOLICITADO')
 
-  const cargar = () => fetch('/api/turnos').then(r => r.json()).then(d => { setTurnos(d.turnos || []); setLoading(false) })
+  const cargar = () => authFetch('/api/turnos').then(r => r.json()).then(d => { setTurnos(d.turnos || []); setLoading(false) })
   useEffect(() => { cargar() }, [])
 
   const responder = async (id: string, estado: string) => {
-    await fetch(`/api/turnos/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado }) })
+    await authFetch(`/api/turnos/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado }) })
     cargar()
   }
 
