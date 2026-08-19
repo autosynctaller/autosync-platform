@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Loader2, Plus, Package, AlertTriangle, Search, X, ArrowDown, ArrowUp, Save } from 'lucide-react'
+import { Loader2, Plus, Package, AlertTriangle, Search, X, ArrowDown, ArrowUp, Save, Camera } from 'lucide-react'
 import { authFetch } from '@/lib/auth-client'
+import BarcodeScanner from '@/components/site/BarcodeScanner'
 
 interface Producto {
   id: string; nombre: string; codigo: string | null; categoria: string | null
@@ -20,6 +21,8 @@ export default function StockPage() {
   const [q, setQ] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showScanner, setShowScanner] = useState(false)
+  const [scannerTarget, setScannerTarget] = useState<'form' | 'search'>('form')
 
   const cargar = () => authFetch('/api/stock/productos').then(r => r.json()).then(d => { setProductos(d.productos || []); setLoading(false) })
   useEffect(() => { cargar() }, [])
@@ -58,14 +61,56 @@ export default function StockPage() {
       {error && <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
       {/* Búsqueda */}
-      <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre o código..." className="w-full rounded-lg border border-border py-2.5 pl-10 pr-3 focus:ring-2 focus:ring-primary" /></div>
+      <div className="relative flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre o código..." className="w-full rounded-lg border border-border py-2.5 pl-10 pr-3 focus:ring-2 focus:ring-primary" />
+        </div>
+        <button
+          type="button"
+          onClick={() => { setScannerTarget('search'); setShowScanner(true) }}
+          className="rounded-lg border border-border p-2.5 hover:bg-muted"
+          title="Escanear código"
+        >
+          <Camera className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Modal del scanner */}
+      {showScanner && (
+        <BarcodeScanner
+          onScan={(codigo) => {
+            console.log('[stock] Código escaneado:', codigo)
+            if (scannerTarget === 'form') {
+              setForm({ ...form, codigo })
+            } else {
+              setQ(codigo)
+            }
+            setShowScanner(false)
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       {/* Formulario nuevo */}
       {showForm && (
         <form onSubmit={crear} className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label className="text-xs font-medium">Nombre *</label><input value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} required className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
-            <div><label className="text-xs font-medium">Código</label><input value={form.codigo} onChange={e => setForm({...form, codigo: e.target.value})} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
+            <div>
+              <label className="text-xs font-medium">Código</label>
+              <div className="flex gap-1">
+                <input value={form.codigo} onChange={e => setForm({...form, codigo: e.target.value})} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" />
+                <button
+                  type="button"
+                  onClick={() => { setScannerTarget('form'); setShowScanner(true) }}
+                  className="shrink-0 rounded-lg border border-border px-3 hover:bg-muted"
+                  title="Escanear código de barras"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
             <div><label className="text-xs font-medium">Categoría</label><input value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="Aceites, Filtros..." /></div>
             <div><label className="text-xs font-medium">Marca</label><input value={form.marca} onChange={e => setForm({...form, marca: e.target.value})} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
             <div><label className="text-xs font-medium">Cantidad inicial</label><input type="number" value={form.cantidad} onChange={e => setForm({...form, cantidad: e.target.value})} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" /></div>
