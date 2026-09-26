@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest) {
 
     const body = await req.json()
     const datos: Record<string, unknown> = {}
-    const campos = ['nombre', 'descripcion', 'telefono', 'whatsapp', 'email', 'direccion', 'ciudad', 'provincia', 'ofreceTurnos', 'horarioApertura', 'horarioCierre', 'diasLaborables', 'duracionTurnoMin']
+    const campos = ['nombre', 'descripcion', 'telefono', 'whatsapp', 'email', 'direccion', 'ciudad', 'provincia', 'ofreceTurnos', 'horarioApertura', 'horarioCierre', 'diasLaborables', 'duracionTurnoMin', 'cicloFacturacionInicio']
     for (const c of campos) {
       if (body[c] !== undefined) datos[c] = body[c]
     }

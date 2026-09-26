@@ -36,8 +36,8 @@ export async function POST(
       notasInternas,
     } = body
 
-    if (!titulo || !descripcion || precio == null) {
-      return NextResponse.json({ error: 'Título, descripción y precio son obligatorios' }, { status: 400 })
+    if (!titulo || !descripcion) {
+      return NextResponse.json({ error: 'Título y descripción son obligatorios' }, { status: 400 })
     }
 
     // Crear el trabajo
@@ -48,7 +48,7 @@ export async function POST(
         servicioId: servicioId || null,
         titulo,
         descripcion,
-        precio: Number(precio),
+        precio: precio ? Number(precio) : null,
         estado: estado || 'COMPLETADO',
         fecha: fecha ? new Date(fecha) : new Date(),
         kilometraje: kilometraje ? Number(kilometraje) : null,

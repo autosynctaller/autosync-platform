@@ -152,32 +152,46 @@ export async function PATCH(
 
     const esDueno = vehiculo.ownerId === user.id
     const esSuperAdmin = user.rol === 'SUPER_ADMIN'
+    const esTaller = user.rol === 'TALLER'
 
-    if (!esDueno && !esSuperAdmin) {
+    if (!esDueno && !esSuperAdmin && !esTaller) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
     const body = await req.json()
     const datosPermitidos: Record<string, unknown> = {}
 
-    // Campos que el dueño puede editar
-    const campos = ['color', 'kilometraje', 'vin', 'numeroMotor', 'tipo', 'combustible', 'notas', 'vtvVencimiento', 'gncVencimiento']
-    for (const campo of campos) {
-      if (body[campo] !== undefined) {
-        if (campo === 'kilometraje') {
-          const kmNuevo = Number(body[campo])
-          // El dueño solo puede AUMENTAR el km
-          if (vehiculo.kilometraje && kmNuevo < vehiculo.kilometraje) {
-            return NextResponse.json(
-              { error: `No podés reducir el kilometraje. Actual: ${vehiculo.kilometraje.toLocaleString('es-AR')} km` },
-              { status: 400 },
-            )
+    // Si es taller, solo puede editar datos del cliente (nombre + whatsapp)
+    if (esTaller && !esDueno && !esSuperAdmin) {
+      if (body.clienteNombre !== undefined) {
+        datosPermitidos.clienteNombre = body.clienteNombre?.trim() || null
+      }
+      if (body.clienteWhatsapp !== undefined) {
+        datosPermitidos.clienteWhatsapp = body.clienteWhatsapp?.trim() || null
+      }
+      if (Object.keys(datosPermitidos).length === 0) {
+        return NextResponse.json({ error: 'Los talleres solo pueden editar nombre y WhatsApp del cliente' }, { status: 403 })
+      }
+    } else {
+      // Campos que el dueño o admin puede editar
+      const campos = ['color', 'kilometraje', 'vin', 'numeroMotor', 'tipo', 'combustible', 'notas', 'vtvVencimiento', 'gncVencimiento', 'clienteNombre', 'clienteWhatsapp']
+      for (const campo of campos) {
+        if (body[campo] !== undefined) {
+          if (campo === 'kilometraje') {
+            const kmNuevo = Number(body[campo])
+            // El dueño solo puede AUMENTAR el km
+            if (vehiculo.kilometraje && kmNuevo < vehiculo.kilometraje) {
+              return NextResponse.json(
+                { error: `No podés reducir el kilometraje. Actual: ${vehiculo.kilometraje.toLocaleString('es-AR')} km` },
+                { status: 400 },
+              )
+            }
+            datosPermitidos[campo] = kmNuevo
+          } else if (campo === 'vtvVencimiento' || campo === 'gncVencimiento') {
+            datosPermitidos[campo] = body[campo] ? new Date(body[campo]) : null
+          } else {
+            datosPermitidos[campo] = body[campo] || null
           }
-          datosPermitidos[campo] = kmNuevo
-        } else if (campo === 'vtvVencimiento' || campo === 'gncVencimiento') {
-          datosPermitidos[campo] = body[campo] ? new Date(body[campo]) : null
-        } else {
-          datosPermitidos[campo] = body[campo] || null
         }
       }
     }

@@ -88,6 +88,9 @@ model Taller {
   // Configuración de stock (premium)
   stockMinimoAlerta Int       @default(5) // alerta cuando queda menos de esto
   
+  // Configuración de facturación (ciclo mensual)
+  cicloFacturacionInicio Int @default(1) // día del mes (1-28) en que empieza el ciclo de facturación
+  
   creadoEn      DateTime      @default(now())
   actualizadoEn DateTime      @updatedAt
 
@@ -125,6 +128,11 @@ model Vehiculo {
   tipo            String   @default("Auto")
   combustible     String?
   notas           String?   // notas visibles del dueño
+  
+  // Datos del cliente cargados por el taller (no requiere reclamar el vehículo)
+  clienteNombre     String?
+  clienteWhatsapp   String?
+  
   vtvVencimiento  DateTime?
   gncVencimiento  DateTime?
   
@@ -189,7 +197,7 @@ model Trabajo {
   
   titulo          String
   descripcion     String
-  precio          Float
+  precio          Float?      // opcional: algunos trabajos no se cobran (garantía, revisión)
   estado          EstadoTrabajo @default(COMPLETADO)
   fecha           DateTime     @default(now())
   kilometraje     Int?

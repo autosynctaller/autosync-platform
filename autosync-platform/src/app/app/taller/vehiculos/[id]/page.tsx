@@ -247,8 +247,8 @@ function TrabajoForm({ vehiculoId, kmActual, onClose, onSaved }: { vehiculoId: s
             <input value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})} required className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="Ej: Cambio de aceite" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium">Precio *</label>
-            <input type="number" value={form.precio} onChange={e => setForm({...form, precio: e.target.value})} required className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="35000" />
+            <label className="mb-1 block text-xs font-medium">Precio</label>
+            <input type="number" value={form.precio} onChange={e => setForm({...form, precio: e.target.value})} className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-primary" placeholder="Opcional" />
           </div>
         </div>
         <div>

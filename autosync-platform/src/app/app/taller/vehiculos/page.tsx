@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Car, Search, Loader2, Plus, Calendar, Gauge } from 'lucide-react'
+import { Car, Search, Loader2, Plus, Calendar, Gauge, MessageCircle, User } from 'lucide-react'
+import { authFetch } from '@/lib/auth-client'
 
 interface Vehiculo {
   id: string
@@ -11,6 +12,8 @@ interface Vehiculo {
   modelo: string
   anio: number
   kilometraje: number | null
+  clienteNombre?: string | null
+  clienteWhatsapp?: string | null
   totalTrabajosTaller?: number
   ultimoTrabajo?: string
 }
@@ -24,7 +27,7 @@ export default function TallerVehiculosPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/vehiculos')
+    authFetch('/api/vehiculos')
       .then(r => r.json())
       .then(data => setVehiculos(data.vehiculos || []))
       .finally(() => setLoading(false))
@@ -37,7 +40,7 @@ export default function TallerVehiculosPage() {
     setError('')
     setResultado(null)
     try {
-      const res = await fetch(`/api/vehiculos/buscar?patente=${encodeURIComponent(patente)}`)
+      const res = await authFetch(`/api/vehiculos/buscar?patente=${encodeURIComponent(patente)}`)
       const data = await res.json()
       setResultado(data)
     } catch {
@@ -45,6 +48,17 @@ export default function TallerVehiculosPage() {
     } finally {
       setBuscando(false)
     }
+  }
+
+  const abrirWhatsapp = (e: React.MouseEvent, telefono: string, patente: string, nombre?: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const numero = telefono.replace(/\D/g, '')
+    if (!numero) return
+    const numeroCompleto = numero.startsWith('54') ? numero : `54${numero}`
+    const saludo = nombre ? `Hola ${nombre}, ` : 'Hola, '
+    const mensaje = encodeURIComponent(`${saludo}te contacto desde el taller por tu vehículo patente ${patente}.`)
+    window.open(`https://wa.me/${numeroCompleto}?text=${mensaje}`, '_blank')
   }
 
   return (
@@ -93,8 +107,7 @@ export default function TallerVehiculosPage() {
               <div>
                 <p className="text-sm text-muted-foreground">{resultado.mensaje}</p>
                 <button onClick={() => {
-                  // Crear vehículo nuevo y redirigir
-                  fetch('/api/vehiculos/reclamar', {
+                  authFetch('/api/vehiculos/reclamar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ patente, marca: 'Desconocida', modelo: 'Desconocido', anio: 2000 }),
@@ -134,9 +147,37 @@ export default function TallerVehiculosPage() {
                       <p className="text-sm text-muted-foreground">{v.anio} · <span className="font-mono">{v.patente}</span></p>
                     </div>
                   </div>
+                  {v.clienteWhatsapp && (
+                    <button
+                      onClick={(e) => abrirWhatsapp(e, v.clienteWhatsapp!, v.patente, v.clienteNombre || undefined)}
+                      className="shrink-0 rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                      title={`Enviar WhatsApp a ${v.clienteNombre || 'cliente'}`}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
+
+                {/* Info del cliente (nombre + whatsapp) */}
+                {(v.clienteNombre || v.clienteWhatsapp) && (
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                    {v.clienteNombre && (
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <User className="h-3 w-3" />
+                        {v.clienteNombre}
+                      </span>
+                    )}
+                    {v.clienteWhatsapp && (
+                      <span className="flex items-center gap-1 text-emerald-600 font-medium">
+                        <MessageCircle className="h-3 w-3" />
+                        {v.clienteWhatsapp}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                  {v.kilometraje && <span className="flex items-center gap-1"><Gauge className="h-3 w-3" />{v.kilometraje.toLocaleString('es-AR')} km</span>}
+                  {v.kilometraje != null && <span className="flex items-center gap-1"><Gauge className="h-3 w-3" />{v.kilometraje.toLocaleString('es-AR')} km</span>}
                   {v.ultimoTrabajo && <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(v.ultimoTrabajo).toLocaleDateString('es-AR')}</span>}
                   {v.totalTrabajosTaller != null && <span>{v.totalTrabajosTaller} trabajo(s)</span>}
                 </div>
